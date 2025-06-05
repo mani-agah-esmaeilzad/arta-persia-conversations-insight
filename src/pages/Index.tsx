@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Brain, Target, TrendingUp, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
@@ -12,78 +12,135 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute top-10 left-10 w-20 h-20 bg-blue-200 rounded-full opacity-60 animate-pulse"></div>
-      <div className="absolute top-32 right-16 w-16 h-16 bg-purple-200 rounded-full opacity-50 animate-bounce"></div>
-      <div className="absolute bottom-20 left-20 w-24 h-24 bg-pink-200 rounded-full opacity-40 animate-pulse"></div>
-      <div className="absolute bottom-40 right-32 w-12 h-12 bg-yellow-200 rounded-full opacity-60 animate-bounce"></div>
-
-      <div className="container mx-auto px-4 py-16 relative z-10">
-        <div className="text-center max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="mb-8 animate-fade-in">
-            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
-              🧠 تحلیلگر مهارت‌های ارتباطی
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-700 leading-relaxed">
-              مهارت‌های ارتباطی خود را کشف کنید و بهبود دهید
-            </p>
-          </div>
-
-          {/* Main Character/Icon */}
-          <div className="mb-12 animate-scale-in">
-            <div className="w-32 h-32 md:w-40 md:h-40 mx-auto bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-6xl md:text-7xl mb-6 shadow-2xl hover-scale">
-              💬
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
+      {/* Status Bar Simulation */}
+      <div className="h-6 bg-gradient-to-r from-blue-600 to-purple-600"></div>
+      
+      {/* Header */}
+      <div className="px-6 py-4 bg-white/70 backdrop-blur-sm border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <Brain className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">تحلیلگر ارتباط</h1>
+              <p className="text-xs text-gray-500">نسخه 1.0</p>
             </div>
           </div>
+          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+          </div>
+        </div>
+      </div>
 
-          {/* Description */}
-          <div className="mb-12 animate-fade-in">
-            <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 md:p-10 shadow-xl border border-white/30">
-              <p className="text-lg md:text-xl text-gray-700 leading-relaxed mb-6">
-                یک گفتگوی ۱۹ سوالی دوستانه که به شما کمک می‌کند:
-              </p>
-              
-              <div className="grid md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-blue-50 rounded-2xl p-6 hover-scale">
-                  <div className="text-3xl mb-3">🎯</div>
-                  <h3 className="font-semibold text-blue-800 mb-2">شناخت دقیق</h3>
-                  <p className="text-blue-700 text-sm">نقاط قوت و ضعف ارتباطی خود را بشناسید</p>
-                </div>
-                
-                <div className="bg-purple-50 rounded-2xl p-6 hover-scale">
-                  <div className="text-3xl mb-3">📈</div>
-                  <h3 className="font-semibold text-purple-800 mb-2">رشد مهارت</h3>
-                  <p className="text-purple-700 text-sm">راه‌های بهبود ارتباطات خود را یاد بگیرید</p>
-                </div>
-                
-                <div className="bg-pink-50 rounded-2xl p-6 hover-scale">
-                  <div className="text-3xl mb-3">✨</div>
-                  <h3 className="font-semibold text-pink-800 mb-2">تحلیل هوشمند</h3>
-                  <p className="text-pink-700 text-sm">گزارش جامع و کاربردی دریافت کنید</p>
-                </div>
+      <div className="px-6 py-8 space-y-8">
+        {/* Main Hero Section */}
+        <div className="text-center space-y-6">
+          <div className="relative">
+            <div className="w-24 h-24 mx-auto bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-3xl flex items-center justify-center mb-6 animate-bounce-gentle shadow-lg">
+              <span className="text-4xl">🧠</span>
+            </div>
+            <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center animate-pulse">
+              <Sparkles className="w-3 h-3 text-white" />
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <h2 className="text-2xl font-bold text-gray-900 leading-tight">
+              مهارت‌های ارتباطی خود را
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                کشف کنید
+              </span>
+            </h2>
+            <p className="text-gray-600 text-base leading-relaxed max-w-sm mx-auto">
+              یک ارزیابی هوشمند ۱۹ سوالی که نقاط قوت و قابل بهبود شما را شناسایی می‌کند
+            </p>
+          </div>
+        </div>
+
+        {/* Features Cards */}
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Target className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 mb-1">ارزیابی دقیق</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  شناسایی دقیق نقاط قوت و ضعف در ارتباطات بین‌فردی شما
+                </p>
               </div>
             </div>
           </div>
 
-          {/* CTA Button */}
-          <div className="animate-fade-in">
-            <Button 
-              onClick={handleStartTest}
-              size="lg"
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 text-xl rounded-2xl shadow-xl hover-scale transition-all duration-300"
-            >
-              شروع گفتگو
-              <ArrowRight className="mr-2 h-6 w-6" />
-            </Button>
-            
-            <p className="text-gray-600 mt-4 text-sm">
-              ⏱️ حدود ۱۰-۱۵ دقیقه زمان می‌برد
-            </p>
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-6 h-6 text-purple-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 mb-1">راهکار بهبود</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  دریافت پیشنهادات عملی برای تقویت مهارت‌های ارتباطی
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Brain className="w-6 h-6 text-emerald-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 mb-1">تحلیل هوشمند</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  گزارش جامع بر اساس روش‌های علمی و معتبر روان‌شناسی
+                </p>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Stats */}
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white">
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold">19</div>
+              <div className="text-xs opacity-90">سوال</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold">10</div>
+              <div className="text-xs opacity-90">دقیقه</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold">95%</div>
+              <div className="text-xs opacity-90">دقت</div>
+            </div>
+          </div>
+        </div>
+
+        {/* CTA Button */}
+        <div className="space-y-4">
+          <Button 
+            onClick={handleStartTest}
+            className="w-full h-14 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white text-lg font-semibold rounded-2xl shadow-lg btn-press"
+          >
+            <span>شروع ارزیابی</span>
+            <ArrowRight className="w-5 h-5 mr-2" />
+          </Button>
+          
+          <p className="text-center text-sm text-gray-500">
+            ⏱️ حدود ۱۰-۱۵ دقیقه زمان می‌برد
+          </p>
+        </div>
       </div>
+
+      {/* Bottom safe area */}
+      <div className="h-8"></div>
     </div>
   );
 };

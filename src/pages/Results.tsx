@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Share2, Download, Star, TrendingUp, Award, Brain } from 'lucide-react';
 
 interface LocationState {
   answers: string[];
@@ -23,7 +23,6 @@ const Results = () => {
       return;
     }
 
-    // Simulate analysis time
     const timer = setTimeout(() => {
       setIsAnalyzing(false);
       setTimeout(() => setShowResults(true), 500);
@@ -32,7 +31,6 @@ const Results = () => {
     return () => clearTimeout(timer);
   }, [answers, navigate]);
 
-  // Simple analysis based on answer length and content
   const analyzeAnswers = () => {
     let totalScore = 0;
     const questionAnalysis = answers.map((answer, index) => {
@@ -63,23 +61,29 @@ const Results = () => {
   const getOverallAssessment = (score: number) => {
     if (score >= 66) return {
       level: 'فرد توانمند',
-      description: 'این امتیاز نشان می‌دهد که شما مهارت‌های ارتباطی بین فردی خوبی دارید و در بیشتر موقعیت‌ها می‌توانید به طور موثری ارتباط برقرار کنید.',
-      color: 'from-green-500 to-emerald-600',
-      emoji: '🌟'
+      description: 'مهارت‌های ارتباطی بین فردی عالی! شما در بیشتر موقعیت‌ها می‌توانید به طور موثری ارتباط برقرار کنید.',
+      color: 'from-emerald-500 to-green-600',
+      bgColor: 'from-emerald-50 to-green-50',
+      emoji: '🌟',
+      icon: Award
     };
     
     if (score >= 46) return {
       level: 'قابل بهبود',
-      description: 'این امتیاز نشان می‌دهد که در برخی جنبه‌های مهارت‌های ارتباطی جای پیشرفت وجود دارد. شناسایی این زمینه‌ها اولین قدم برای تقویت آنهاست.',
-      color: 'from-yellow-500 to-orange-600',
-      emoji: '📈'
+      description: 'در برخی جنبه‌های مهارت‌های ارتباطی جای پیشرفت وجود دارد. شناسایی این زمینه‌ها اولین قدم برای تقویت است.',
+      color: 'from-amber-500 to-orange-600',
+      bgColor: 'from-amber-50 to-orange-50',
+      emoji: '📈',
+      icon: TrendingUp
     };
     
     return {
       level: 'نیازمند توجه ویژه',
-      description: 'در حال حاضر در مهارت‌های ارتباطی به تمرین و تقویت بیشتری نیاز دارید. این شناخت، شروع مسیر بهبود شماست.',
+      description: 'در مهارت‌های ارتباطی به تمرین و تقویت بیشتری نیاز دارید. این شناخت، شروع مسیر بهبود شماست.',
       color: 'from-blue-500 to-purple-600',
-      emoji: '🎯'
+      bgColor: 'from-blue-50 to-purple-50',
+      emoji: '🎯',
+      icon: Star
     };
   };
 
@@ -87,16 +91,32 @@ const Results = () => {
 
   if (isAnalyzing) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-6 animate-spin">🧠</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">در حال تحلیل پاسخ‌های شما...</h2>
-          <p className="text-gray-600">لطفاً صبر کنید 💭</p>
-          <div className="mt-8">
-            <div className="flex justify-center space-x-1">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+        {/* Status Bar */}
+        <div className="h-6 bg-gradient-to-r from-purple-600 to-blue-600"></div>
+        
+        <div className="flex items-center justify-center min-h-[calc(100vh-24px)]">
+          <div className="text-center px-6 space-y-8">
+            <div className="relative">
+              <div className="w-24 h-24 mx-auto bg-gradient-to-br from-purple-500 to-blue-600 rounded-3xl flex items-center justify-center animate-pulse">
+                <Brain className="w-12 h-12 text-white" />
+              </div>
+              <div className="absolute -inset-2 bg-gradient-to-r from-purple-300 to-blue-300 rounded-3xl blur opacity-50 animate-pulse"></div>
+            </div>
+            
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-gray-900">
+                در حال تحلیل پاسخ‌ها...
+              </h2>
+              <p className="text-gray-600">
+                هوش مصنوعی در حال بررسی دقیق پاسخ‌های شماست
+              </p>
+            </div>
+
+            <div className="flex justify-center items-center space-x-2">
               <div className="w-3 h-3 bg-purple-500 rounded-full animate-bounce"></div>
-              <div className="w-3 h-3 bg-pink-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-              <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+              <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+              <div className="w-3 h-3 bg-indigo-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
             </div>
           </div>
         </div>
@@ -105,75 +125,139 @@ const Results = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4">
-      <div className="max-w-4xl mx-auto py-8">
-        {/* Header */}
-        <div className={`text-center mb-8 ${showResults ? 'animate-fade-in' : 'opacity-0'}`}>
-          <div className="text-6xl mb-4">{assessment.emoji}</div>
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">
-            خیلی ممنونم که وقت گذاشتی! 😊
-          </h1>
-          <p className="text-lg text-gray-700">
-            حالا بر اساس پاسخ‌های شما، یک تحلیل آماده کردم:
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+      {/* Status Bar */}
+      <div className="h-6 bg-gradient-to-r from-purple-600 to-blue-600"></div>
+      
+      {/* Header */}
+      <div className="px-6 py-4 bg-white/70 backdrop-blur-sm border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => navigate('/')}
+              className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center btn-press"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            </button>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">نتایج ارزیابی</h1>
+              <p className="text-xs text-gray-500">گزارش کامل</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center btn-press">
+              <Share2 className="w-5 h-5 text-gray-600" />
+            </button>
+            <button className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center btn-press">
+              <Download className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-6 py-6 space-y-6">
+        {/* Success Message */}
+        <div className={`text-center space-y-4 ${showResults ? 'animate-scale-in' : 'opacity-0'}`}>
+          <div className="w-16 h-16 mx-auto bg-gradient-to-br from-emerald-400 to-green-500 rounded-3xl flex items-center justify-center">
+            <span className="text-2xl">✅</span>
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">تبریک! ارزیابی تکمیل شد</h2>
+            <p className="text-gray-600 text-sm">نتایج کامل شما آماده است</p>
+          </div>
         </div>
 
-        {/* Overall Results */}
-        <div className={`bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl mb-8 ${showResults ? 'animate-scale-in' : 'opacity-0'}`}>
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">🔸 پروفایل کلی مهارت‌های ارتباطی</h2>
-          
-          <div className="mb-6">
-            <h3 className="text-xl font-semibold mb-3">۱. امتیاز کل:</h3>
-            <div className="bg-gray-100 rounded-2xl p-4">
-              <p className="text-lg">
-                مجموع امتیازات شما برای ۱۹ عبارت: <strong className="text-2xl">{totalScore}</strong> (از حداکثر ۹۵ امتیاز ممکن)
+        {/* Main Result Card */}
+        <div className={`bg-gradient-to-br ${assessment.bgColor} rounded-2xl p-6 border border-gray-100 shadow-sm ${showResults ? 'animate-slide-up' : 'opacity-0'}`}>
+          <div className="text-center space-y-4">
+            <div className={`w-16 h-16 mx-auto bg-gradient-to-r ${assessment.color} rounded-2xl flex items-center justify-center`}>
+              <assessment.icon className="w-8 h-8 text-white" />
+            </div>
+            
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                {assessment.level}
+              </h3>
+              <p className="text-gray-700 leading-relaxed text-sm">
+                {assessment.description}
               </p>
             </div>
-          </div>
 
-          <div className="mb-6">
-            <h3 className="text-xl font-semibold mb-3">۲. تفسیر امتیاز کل:</h3>
-            <div className={`bg-gradient-to-r ${assessment.color} text-white rounded-2xl p-6`}>
-              <h4 className="text-xl font-bold mb-3">سطح مهارت ارتباطی شما: {assessment.level}</h4>
-              <p className="leading-relaxed">{assessment.description}</p>
+            <div className="bg-white/50 rounded-xl p-4">
+              <div className="text-3xl font-bold text-gray-900">{totalScore}</div>
+              <div className="text-sm text-gray-600">از ۹۵ امتیاز کل</div>
             </div>
           </div>
         </div>
 
-        {/* Detailed Analysis */}
-        <div className={`bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl mb-8 ${showResults ? 'animate-fade-in' : 'opacity-0'}`}>
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">🔹 تحلیل جزء به جزء پاسخ‌ها</h2>
+        {/* Score Breakdown */}
+        <div className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-100 ${showResults ? 'animate-slide-up' : 'opacity-0'}`}>
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Brain className="w-5 h-5 text-blue-600" />
+            تحلیل تفصیلی
+          </h3>
           
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {questionAnalysis.map((analysis, index) => (
-              <div key={index} className="border-b border-gray-200 pb-4">
-                <h4 className="font-semibold text-gray-800 mb-2">
-                  سوال {analysis.question}: امتیاز {analysis.score} از ۵
-                </h4>
-                <p className="text-gray-700 text-sm">{analysis.reasoning}</p>
+          <div className="space-y-3 max-h-64 overflow-y-auto">
+            {questionAnalysis.slice(0, 5).map((analysis, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-gray-900 mb-1">
+                    سوال {analysis.question}
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    {analysis.reasoning}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-lg font-bold text-gray-900">
+                    {analysis.score}
+                  </div>
+                  <div className="text-xs text-gray-500">/۵</div>
+                </div>
               </div>
             ))}
+            
+            {questionAnalysis.length > 5 && (
+              <div className="text-center py-2">
+                <button className="text-sm text-blue-600 font-medium">
+                  مشاهده همه ({questionAnalysis.length - 5} مورد دیگر)
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Final Message */}
-        <div className={`text-center ${showResults ? 'animate-fade-in' : 'opacity-0'}`}>
-          <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-2xl p-6 mb-6">
-            <p className="text-gray-700 leading-relaxed">
-              امیدوارم این تحلیل برات مفید بوده باشه. یادت باشه که این فقط یک نگاه کلی بر اساس این پرسشنامه بود و مهمترین چیز تلاش مستمر برای بهتر شدن در ارتباطاتمون هست. 😊
-            </p>
+        {/* Recommendations */}
+        <div className={`bg-blue-50 rounded-2xl p-6 border border-blue-100 ${showResults ? 'animate-slide-up' : 'opacity-0'}`}>
+          <h3 className="text-lg font-bold text-blue-900 mb-3">💡 پیشنهادات بهبود</h3>
+          <div className="space-y-2 text-sm text-blue-800">
+            <p>• تمرین گوش دادن فعال در گفتگوهای روزانه</p>
+            <p>• شرکت در کارگاه‌های مهارت‌های ارتباطی</p>
+            <p>• تمرین بیان احساسات به شکل سازنده</p>
           </div>
+        </div>
 
+        {/* Action Buttons */}
+        <div className={`space-y-3 ${showResults ? 'animate-slide-up' : 'opacity-0'}`}>
+          <Button
+            onClick={() => navigate('/assessment')}
+            className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-xl btn-press"
+          >
+            ارزیابی مجدد
+          </Button>
+          
           <Button
             onClick={() => navigate('/')}
             variant="outline"
-            className="px-6 py-3 rounded-xl"
+            className="w-full h-12 rounded-xl font-medium btn-press"
           >
-            <ArrowLeft className="ml-2 h-5 w-5" />
             بازگشت به صفحه اصلی
           </Button>
         </div>
       </div>
+
+      {/* Bottom safe area */}
+      <div className="h-8"></div>
     </div>
   );
 };
