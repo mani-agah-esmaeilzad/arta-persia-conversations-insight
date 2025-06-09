@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,7 +15,7 @@ const Assessment = () => {
   const [messages, setMessages] = useState<Array<{type: 'bot' | 'user', content: string, timestamp: Date}>>([]);
   const [isTyping, setIsTyping] = useState(false);
 
-  const webhookUrl = 'https://cofe-code.com/webhook/park';
+  const webhookUrl = 'https://cofe-code.com/webhook-test/ravanshenasi';
 
   const sendToWebhook = async (message: string, scenarioIndex: number) => {
     try {
