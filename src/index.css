@@ -14,24 +14,24 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 220 70% 50%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220 8.9% 46.1%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 220 70% 50%;
 
     --radius: 0.5rem;
 
@@ -42,7 +42,13 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 220 70% 50%;
+
+    /* Corporate Colors */
+    --corporate-blue: 220 100% 50%;
+    --corporate-navy: 220 100% 25%;
+    --corporate-gray: 220 13% 46%;
+    --corporate-light: 220 13% 95%;
   }
 
   .dark {
@@ -87,7 +93,7 @@
   }
 }
 
-/* Custom scrollbar for mobile-like experience */
+/* Corporate scrollbar */
 ::-webkit-scrollbar {
   width: 4px;
 }
@@ -97,21 +103,50 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: hsl(var(--corporate-gray));
   border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: hsl(var(--corporate-navy));
 }
 
-/* Smooth transitions for mobile-like feel */
+/* Professional transitions */
 * {
-  transition: all 0.2s ease-in-out;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Mobile app-like button press effect */
+/* Corporate button press effect */
 .btn-press:active {
-  transform: scale(0.95);
+  transform: scale(0.98);
   transition: transform 0.1s ease-in-out;
+}
+
+/* Corporate animations */
+@keyframes slide-in-professional {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-corporate {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-professional {
+  animation: slide-in-professional 0.4s ease-out;
+}
+
+.animate-fade-in-corporate {
+  animation: fade-in-corporate 0.3s ease-out;
 }
