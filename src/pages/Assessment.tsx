@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,7 +14,33 @@ const Assessment = () => {
   const [messages, setMessages] = useState<Array<{type: 'bot' | 'user', content: string, timestamp: Date}>>([]);
   const [isTyping, setIsTyping] = useState(false);
 
-  const handleAnswerSubmit = () => {
+  const webhookUrl = 'https://cofe-code.com/webhook/park';
+
+  const sendToWebhook = async (message: string, scenarioIndex: number) => {
+    try {
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message,
+          scenario: scenarios[scenarioIndex].scenario,
+          question: scenarios[scenarioIndex].question,
+          scenarioIndex: scenarioIndex,
+          timestamp: new Date().toISOString()
+        }),
+      });
+
+      const data = await response.json();
+      return data.response || 'پاسخ شما دریافت شد. با تشکر از همکاری شما.';
+    } catch (error) {
+      console.error('خطا در ارسال به webhook:', error);
+      return 'پاسخ شما ثبت شد. برای ادامه منتظر بمانید...';
+    }
+  };
+
+  const handleAnswerSubmit = async () => {
     if (!currentAnswer.trim()) return;
 
     // Add user message
@@ -36,34 +61,64 @@ const Assessment = () => {
     // Show typing indicator
     setIsTyping(true);
 
-    // Simulate bot response delay
-    setTimeout(() => {
+    try {
+      // Send to webhook and get response
+      const webhookResponse = await sendToWebhook(currentAnswer, currentScenario);
+      
       setIsTyping(false);
       
       if (currentScenario < scenarios.length - 1) {
-        // Add next scenario
-        const nextScenario = scenarios[currentScenario + 1];
-        const botMessage = {
+        // Add bot response
+        const botResponseMessage = {
           type: 'bot' as const,
-          content: `${nextScenario.scenario}\n\n${nextScenario.question}`,
+          content: webhookResponse,
           timestamp: new Date()
         };
-        setMessages(prev => [...prev, botMessage]);
-        setCurrentScenario(currentScenario + 1);
-      } else {
-        // Final message
-        const finalMessage = {
-          type: 'bot' as const,
-          content: "عالی! تمام سناریوها را بررسی کردید. در حال تحلیل پاسخ‌های شما...",
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, finalMessage]);
-        
+        setMessages(prev => [...prev, botResponseMessage]);
+
+        // Wait a moment then add next scenario
         setTimeout(() => {
-          navigate('/results', { state: { answers: newAnswers } });
-        }, 2000);
+          const nextScenario = scenarios[currentScenario + 1];
+          const nextScenarioMessage = {
+            type: 'bot' as const,
+            content: nextScenario.scenario,
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, nextScenarioMessage]);
+          setCurrentScenario(currentScenario + 1);
+        }, 1000);
+      } else {
+        // Final response from webhook
+        const finalBotMessage = {
+          type: 'bot' as const,
+          content: webhookResponse,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, finalBotMessage]);
+        
+        // Final completion message
+        setTimeout(() => {
+          const completionMessage = {
+            type: 'bot' as const,
+            content: "ممنون از همکاری شما! ارزیابی کامل شد. در حال تحلیل نهایی پاسخ‌هایتان...",
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, completionMessage]);
+          
+          setTimeout(() => {
+            navigate('/results', { state: { answers: newAnswers } });
+          }, 2000);
+        }, 1000);
       }
-    }, 1500 + Math.random() * 1000);
+    } catch (error) {
+      setIsTyping(false);
+      const errorMessage = {
+        type: 'bot' as const,
+        content: "متأسفانه خطایی رخ داد. لطفاً دوباره تلاش کنید.",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
   };
 
   const handleStart = () => {
@@ -72,7 +127,11 @@ const Assessment = () => {
     const firstScenario = scenarios[0];
     const firstMessage = {
       type: 'bot' as const,
-      content: `سلام! آماده هستید؟ قراره چند سناریو کاری براتون بگم و ببینم در این موقعیت‌ها چطور واکنش نشان می‌دهید.\n\n${firstScenario.scenario}\n\n${firstScenario.question}`,
+      content: `سلام! به ارزیابی مهارت‌های ارتباطی خوش آمدید. 
+
+${firstScenario.scenario}
+
+حالا نوبت شماست که واکنش خود را نشان دهید...`,
       timestamp: new Date()
     };
     setMessages([firstMessage]);
