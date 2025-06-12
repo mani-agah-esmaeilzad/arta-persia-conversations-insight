@@ -13,7 +13,7 @@ const Assessment = () => {
   const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const webhookUrl = 'https://cofe-code.com/webhook-test/ravanshenasi';
+  const webhookUrl = 'https://cofe-code.com/webhook/ravanshenasi';
 
   useEffect(() => {
     // Scroll to bottom when new messages arrive
