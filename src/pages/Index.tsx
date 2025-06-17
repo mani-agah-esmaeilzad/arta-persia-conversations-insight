@@ -1,14 +1,32 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Building2, Target, TrendingUp, Shield, Users, BarChart3 } from 'lucide-react';
+import { ArrowRight, Building2, Target, TrendingUp, Shield, Users, BarChart3, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const navigate = useNavigate();
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+
+  const skills = [
+    { id: 'communication', title: 'مهارت‌های ارتباطی', description: 'ارتباط مؤثر با همکاران و مشتریان' },
+    { id: 'leadership', title: 'مهارت‌های رهبری', description: 'رهبری تیم و مدیریت پروژه' },
+    { id: 'teamwork', title: 'کار تیمی', description: 'همکاری مؤثر در تیم‌های کاری' },
+    { id: 'problem-solving', title: 'حل مسئله', description: 'تحلیل و حل مسائل پیچیده' },
+    { id: 'time-management', title: 'مدیریت زمان', description: 'برنامه‌ریزی و اولویت‌بندی وظایف' },
+    { id: 'emotional-intelligence', title: 'هوش عاطفی', description: 'درک و مدیریت احساسات خود و دیگران' }
+  ];
+
+  const handleSkillToggle = (skillId: string) => {
+    setSelectedSkills(prev => 
+      prev.includes(skillId) 
+        ? prev.filter(id => id !== skillId)
+        : [...prev, skillId]
+    );
+  };
 
   const handleStartTest = () => {
-    navigate('/login');
+    navigate('/login', { state: { selectedSkills } });
   };
 
   return (
@@ -57,6 +75,44 @@ const Index = () => {
             <p className="text-slate-600 text-base leading-relaxed max-w-sm mx-auto">
               سامانه پیشرفته ارزیابی مهارت‌های بین‌فردی با روش‌های علمی و استاندارد
             </p>
+          </div>
+        </div>
+
+        {/* Skills Selection */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-slate-900 text-center">
+            مهارت‌های مورد نظر خود را انتخاب کنید
+          </h3>
+          <div className="space-y-3">
+            {skills.map((skill) => (
+              <div
+                key={skill.id}
+                onClick={() => handleSkillToggle(skill.id)}
+                className={`bg-white rounded-2xl p-4 shadow-sm border-2 cursor-pointer transition-all ${
+                  selectedSkills.includes(skill.id)
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-slate-200 hover:border-blue-300'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-1 ${
+                    selectedSkills.includes(skill.id)
+                      ? 'border-blue-500 bg-blue-500'
+                      : 'border-slate-300'
+                  }`}>
+                    {selectedSkills.includes(skill.id) && (
+                      <CheckCircle className="w-4 h-4 text-white fill-current" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-slate-900 mb-1">{skill.title}</h4>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      {skill.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -109,8 +165,8 @@ const Index = () => {
         <div className="bg-gradient-to-r from-blue-600 to-slate-700 rounded-2xl p-6 text-white">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <div className="text-2xl font-bold">19</div>
-              <div className="text-xs opacity-90">سناریو</div>
+              <div className="text-2xl font-bold">مطابق</div>
+              <div className="text-xs opacity-90">استاندارد</div>
             </div>
             <div>
               <div className="text-2xl font-bold">15</div>
@@ -127,9 +183,10 @@ const Index = () => {
         <div className="space-y-4">
           <Button 
             onClick={handleStartTest}
-            className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold rounded-2xl shadow-lg btn-press"
+            disabled={selectedSkills.length === 0}
+            className="w-full h-14 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white text-lg font-semibold rounded-2xl shadow-lg btn-press"
           >
-            <span>شروع ارزیابی</span>
+            <span>شروع ارزیابی ({selectedSkills.length} مهارت انتخاب شده)</span>
             <ArrowRight className="w-5 h-5 mr-2" />
           </Button>
           
