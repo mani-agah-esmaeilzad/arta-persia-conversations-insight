@@ -4,10 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Building2, User, Phone, Mail, MapPin, Briefcase } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const selectedSkills = location.state?.selectedSkills || [];
+  
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -16,7 +19,6 @@ const Login = () => {
     city: '',
     phone: '',
     email: '',
-    password: '',
     organization: '',
     position: ''
   });
@@ -28,15 +30,15 @@ const Login = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // فعلاً فقط به صفحه ارزیابی می‌رود
-    navigate('/assessment');
+    navigate('/assessment', { state: { selectedSkills, userInfo: formData } });
   };
 
   const isFormValid = () => {
     if (isLogin) {
-      return formData.email && formData.password;
+      return formData.phone;
     }
     return formData.firstName && formData.lastName && formData.province && 
-           formData.city && formData.phone && formData.email && formData.password;
+           formData.city && formData.phone;
   };
 
   return (
@@ -59,6 +61,20 @@ const Login = () => {
 
       <div className="px-6 py-8">
         <div className="max-w-md mx-auto">
+          {/* Selected Skills Display */}
+          {selectedSkills.length > 0 && (
+            <div className="mb-6 bg-blue-50 rounded-xl p-4 border border-blue-200">
+              <h3 className="text-sm font-medium text-blue-900 mb-2">مهارت‌های انتخاب شده:</h3>
+              <div className="flex flex-wrap gap-2">
+                {selectedSkills.map((skill: string, index: number) => (
+                  <span key={index} className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Logo and Title */}
           <div className="text-center mb-8">
             <div className="w-20 h-20 mx-auto bg-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
@@ -68,7 +84,7 @@ const Login = () => {
               {isLogin ? 'ورود به حساب کاربری' : 'ایجاد حساب کاربری'}
             </h2>
             <p className="text-slate-600">
-              {isLogin ? 'برای ادامه وارد حساب خود شوید' : 'اطلاعات خود را وارد کنید'}
+              {isLogin ? 'شماره موبایل خود را وارد کنید' : 'اطلاعات خود را وارد کنید'}
             </p>
           </div>
 
@@ -123,24 +139,22 @@ const Login = () => {
                   </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="phone" className="text-slate-700 font-medium">شماره موبایل *</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className="mt-1 border-slate-300 focus:border-blue-500"
-                    placeholder="09123456789"
-                    required
-                  />
-                </div>
-
                 {/* Optional Fields */}
                 <div className="pt-4 border-t border-slate-200">
                   <h3 className="text-sm font-medium text-slate-700 mb-3">اطلاعات تکمیلی (اختیاری)</h3>
                   
                   <div>
+                    <Label htmlFor="email" className="text-slate-600">ایمیل</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      className="mt-1 border-slate-300 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="mt-3">
                     <Label htmlFor="organization" className="text-slate-600">سازمان یا شرکت</Label>
                     <Input
                       id="organization"
@@ -163,28 +177,17 @@ const Login = () => {
               </>
             )}
 
-            {/* Email and Password */}
+            {/* Phone Number - Main field */}
             <div className={!isLogin ? 'pt-4 border-t border-slate-200' : ''}>
               <div>
-                <Label htmlFor="email" className="text-slate-700 font-medium">ایمیل *</Label>
+                <Label htmlFor="phone" className="text-slate-700 font-medium">شماره موبایل *</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  id="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
                   className="mt-1 border-slate-300 focus:border-blue-500"
-                  required
-                />
-              </div>
-
-              <div className="mt-4">
-                <Label htmlFor="password" className="text-slate-700 font-medium">رمز عبور *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                  className="mt-1 border-slate-300 focus:border-blue-500"
+                  placeholder="09123456789"
                   required
                 />
               </div>
