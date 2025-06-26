@@ -104,13 +104,13 @@ const Assessment = () => {
 
     const data = await sendMessage(messageToSend);
 
-    // Check if the N8N agent has signaled the end of the assessment
+    // اگر دیتا ساختار گزارش نهایی را داشت، به صفحه نتایج برو
     if (data.assessmentComplete && data.analysis) {
-      // The agent sent the final report. Navigate to the results page.
       navigate('/results', { state: { analysis: data.analysis } });
-      return; // Stop processing further in this component
+      return; // اجرای تابع در اینجا متوقف می‌شود
     }
 
+    // اگر پیام عادی بود، آن را به لیست پیام‌ها اضافه کن
     const botMessage = {
       type: 'bot' as const,
       content: data.response || 'متأسفانه پاسخی دریافت نشد. لطفاً دوباره تلاش کنید.',
