@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -67,7 +66,7 @@ const Assessment = () => {
     }
   };
 
-  const sendMessage = async (message: string) => {
+  const sendMessage = async (message: string): Promise<any> => {
     try {
       const response = await fetch(webhookUrl, {
         method: 'POST',
@@ -78,22 +77,20 @@ const Assessment = () => {
           message: message,
           type: "user_message",
           timestamp: new Date().toISOString(),
-          conversation_history: messages.slice(-10) // Send last 10 messages for context
+          conversation_history: messages.slice(-10) 
         }),
       });
 
-      const data = await response.json();
-      return data.response || 'متأسفانه پاسخی دریافت نشد. لطفاً دوباره تلاش کنید.';
+      return await response.json();
     } catch (error) {
       console.error('خطا در ارسال پیام:', error);
-      return 'خطا در ارتباط با سرور. لطفاً اتصال اینترنت خود را بررسی کنید.';
+      return { response: 'خطا در ارتباط با سرور. لطفاً اتصال اینترنت خود را بررسی کنید.' };
     }
   };
 
   const handleSendMessage = async () => {
     if (!currentMessage.trim() || isTyping) return;
 
-    // Add user message to chat
     const userMessage = {
       type: 'user' as const,
       content: currentMessage,
@@ -105,13 +102,18 @@ const Assessment = () => {
     setCurrentMessage('');
     setIsTyping(true);
 
-    // Send to webhook and get response
-    const webhookResponse = await sendMessage(messageToSend);
-    
-    // Add bot response to chat
+    const data = await sendMessage(messageToSend);
+
+    // Check if the N8N agent has signaled the end of the assessment
+    if (data.assessmentComplete && data.analysis) {
+      // The agent sent the final report. Navigate to the results page.
+      navigate('/results', { state: { analysis: data.analysis } });
+      return; // Stop processing further in this component
+    }
+
     const botMessage = {
       type: 'bot' as const,
-      content: webhookResponse,
+      content: data.response || 'متأسفانه پاسخی دریافت نشد. لطفاً دوباره تلاش کنید.',
       timestamp: new Date()
     };
     

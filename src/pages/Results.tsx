@@ -2,10 +2,33 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Share2, Download, Star, TrendingUp, Award, Brain } from 'lucide-react';
+import { ArrowLeft, Share2, Download, Star, TrendingUp, Award, Brain, LucideIcon } from 'lucide-react';
+
+// A map to resolve icon names from the N8N agent to actual components
+const iconMap: { [key: string]: LucideIcon } = {
+  Award,
+  TrendingUp,
+  Star,
+};
+
+interface Analysis {
+  totalScore: number;
+  questionAnalysis: Array<{
+    question: number;
+    score: number;
+    reasoning: string;
+  }>;
+  assessment: {
+    level: string;
+    description: string;
+    color: string;
+    bgColor: string;
+    icon: string; // The name of the icon as a string
+  };
+}
 
 interface LocationState {
-  answers: string[];
+  analysis: Analysis;
 }
 
 const Results = () => {
@@ -15,10 +38,10 @@ const Results = () => {
   const [showResults, setShowResults] = useState(false);
   
   const state = location.state as LocationState;
-  const answers = state?.answers || [];
+  const analysis = state?.analysis;
 
   useEffect(() => {
-    if (answers.length === 0) {
+    if (!analysis) {
       navigate('/');
       return;
     }
@@ -29,65 +52,7 @@ const Results = () => {
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [answers, navigate]);
-
-  const analyzeAnswers = () => {
-    let totalScore = 0;
-    const questionAnalysis = answers.map((answer, index) => {
-      let score = 1;
-      
-      if (answer.length > 100) score += 1;
-      if (answer.length > 200) score += 1;
-      if (answer.includes('خوب') || answer.includes('بله') || answer.includes('می‌توانم')) score += 1;
-      if (answer.includes('مثال') || answer.includes('تجربه') || answer.includes('موقعیت')) score += 1;
-      
-      score = Math.min(score, 5);
-      totalScore += score;
-      
-      return {
-        question: index + 1,
-        score,
-        reasoning: score >= 4 ? 'پاسخ شما نشان‌دهنده آگاهی و تجربه خوبی در این زمینه است.' : 
-                  score >= 3 ? 'در این زمینه مهارت متوسطی دارید.' :
-                  'در این زمینه فضای بهبود وجود دارد.'
-      };
-    });
-
-    return { totalScore, questionAnalysis };
-  };
-
-  const { totalScore, questionAnalysis } = analyzeAnswers();
-
-  const getOverallAssessment = (score: number) => {
-    if (score >= 66) return {
-      level: 'فرد توانمند',
-      description: 'مهارت‌های ارتباطی بین فردی عالی! شما در بیشتر موقعیت‌ها می‌توانید به طور موثری ارتباط برقرار کنید.',
-      color: 'from-emerald-500 to-green-600',
-      bgColor: 'from-emerald-50 to-green-50',
-      emoji: '🌟',
-      icon: Award
-    };
-    
-    if (score >= 46) return {
-      level: 'قابل بهبود',
-      description: 'در برخی جنبه‌های مهارت‌های ارتباطی جای پیشرفت وجود دارد. شناسایی این زمینه‌ها اولین قدم برای تقویت است.',
-      color: 'from-amber-500 to-orange-600',
-      bgColor: 'from-amber-50 to-orange-50',
-      emoji: '📈',
-      icon: TrendingUp
-    };
-    
-    return {
-      level: 'نیازمند توجه ویژه',
-      description: 'در مهارت‌های ارتباطی به تمرین و تقویت بیشتری نیاز دارید. این شناخت، شروع مسیر بهبود شماست.',
-      color: 'from-blue-500 to-purple-600',
-      bgColor: 'from-blue-50 to-purple-50',
-      emoji: '🎯',
-      icon: Star
-    };
-  };
-
-  const assessment = getOverallAssessment(totalScore);
+  }, [analysis, navigate]);
 
   if (isAnalyzing) {
     return (
@@ -123,6 +88,14 @@ const Results = () => {
       </div>
     );
   }
+
+  // This check is important for type safety after the loading state
+  if (!analysis) {
+    return null;
+  }
+
+  const { totalScore, questionAnalysis, assessment } = analysis;
+  const AssessmentIcon = iconMap[assessment.icon] || Star; // Fallback to Star icon
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
@@ -171,7 +144,7 @@ const Results = () => {
         <div className={`bg-gradient-to-br ${assessment.bgColor} rounded-2xl p-6 border border-gray-100 shadow-sm ${showResults ? 'animate-slide-up' : 'opacity-0'}`}>
           <div className="text-center space-y-4">
             <div className={`w-16 h-16 mx-auto bg-gradient-to-r ${assessment.color} rounded-2xl flex items-center justify-center`}>
-              <assessment.icon className="w-8 h-8 text-white" />
+              <AssessmentIcon className="w-8 h-8 text-white" />
             </div>
             
             <div>
