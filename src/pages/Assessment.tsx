@@ -3,26 +3,45 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Send, User, Bot, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { assessmentApi, ChatMessage } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const Assessment = () => {
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<Array<{type: 'bot' | 'user', content: string, timestamp: Date}>>([]);
+  const { user, selectedSkillId, currentAssessmentId, setCurrentAssessmentId } = useAuth();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
+  const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const webhookUrl = 'https://cofe-code.com/webhook/ravanshenasi';
-
   useEffect(() => {
-    // Scroll to bottom when new messages arrive
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
-    // Send initial greeting to start conversation
-    handleInitialConnection();
-  }, []);
+    if (!user || !selectedSkillId) {
+      navigate('/');
+      return;
+    }
+    
+    const initializeAssessment = async () => {
+      try {
+        const assessment = await assessmentApi.start(user.id, selectedSkillId);
+        setCurrentAssessmentId(assessment.id);
+        const existingMessages = await assessmentApi.getMessages(assessment.id);
+        setMessages(existingMessages);
+      } catch (error) {
+        console.error('خطا در شروع ارزیابی:', error);
+        toast.error('خطا در شروع ارزیابی');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAssessment();
+  }, [user, selectedSkillId]);
 
   const handleInitialConnection = async () => {
     setIsTyping(true);

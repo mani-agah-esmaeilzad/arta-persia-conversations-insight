@@ -1,32 +1,51 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Building2, Target, TrendingUp, Shield, Users, BarChart3, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { skillsApi, Skill } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
   const navigate = useNavigate();
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [selectedSkill, setSelectedSkill] = useState<number | null>(null);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { setSelectedSkillId } = useAuth();
 
-  const skills = [
-    { id: 'communication', title: 'مهارت‌های ارتباطی', description: 'ارتباط مؤثر با همکاران و مشتریان' },
-    { id: 'leadership', title: 'مهارت‌های رهبری', description: 'رهبری تیم و مدیریت پروژه' },
-    { id: 'teamwork', title: 'کار تیمی', description: 'همکاری مؤثر در تیم‌های کاری' },
-    { id: 'problem-solving', title: 'حل مسئله', description: 'تحلیل و حل مسائل پیچیده' },
-    { id: 'time-management', title: 'مدیریت زمان', description: 'برنامه‌ریزی و اولویت‌بندی وظایف' },
-    { id: 'emotional-intelligence', title: 'هوش عاطفی', description: 'درک و مدیریت احساسات خود و دیگران' }
-  ];
+  useEffect(() => {
+    const fetchSkills = async () => {
+      try {
+        const skillsData = await skillsApi.getAll();
+        setSkills(skillsData);
+      } catch (error) {
+        console.error('خطا در دریافت مهارت‌ها:', error);
+        // Fallback skills in case of API error
+        setSkills([
+          { id: 1, name: 'مهارت‌های ارتباطی', description: 'ارتباط مؤثر با همکاران و مشتریان' },
+          { id: 2, name: 'مهارت‌های رهبری', description: 'رهبری تیم و مدیریت پروژه' },
+          { id: 3, name: 'کار تیمی', description: 'همکاری مؤثر در تیم‌های کاری' },
+          { id: 4, name: 'حل مسئله', description: 'تحلیل و حل مسائل پیچیده' },
+          { id: 5, name: 'مدیریت زمان', description: 'برنامه‌ریزی و اولویت‌بندی وظایف' },
+          { id: 6, name: 'هوش عاطفی', description: 'درک و مدیریت احساسات خود و دیگران' }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleSkillToggle = (skillId: string) => {
-    setSelectedSkills(prev => 
-      prev.includes(skillId) 
-        ? prev.filter(id => id !== skillId)
-        : [...prev, skillId]
-    );
+    fetchSkills();
+  }, []);
+
+  const handleSkillSelect = (skillId: number) => {
+    setSelectedSkill(skillId);
   };
 
   const handleStartTest = () => {
-    navigate('/login', { state: { selectedSkills } });
+    if (selectedSkill) {
+      setSelectedSkillId(selectedSkill);
+      navigate('/login');
+    }
   };
 
   return (
@@ -81,39 +100,46 @@ const Index = () => {
         {/* Skills Selection */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-slate-900 text-center">
-            مهارت‌های مورد نظر خود را انتخاب کنید
+            مهارت مورد نظر خود را انتخاب کنید
           </h3>
-          <div className="space-y-3">
-            {skills.map((skill) => (
-              <div
-                key={skill.id}
-                onClick={() => handleSkillToggle(skill.id)}
-                className={`bg-white rounded-2xl p-4 shadow-sm border-2 cursor-pointer transition-all ${
-                  selectedSkills.includes(skill.id)
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-slate-200 hover:border-blue-300'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-1 ${
-                    selectedSkills.includes(skill.id)
-                      ? 'border-blue-500 bg-blue-500'
-                      : 'border-slate-300'
-                  }`}>
-                    {selectedSkills.includes(skill.id) && (
-                      <CheckCircle className="w-4 h-4 text-white fill-current" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-slate-900 mb-1">{skill.title}</h4>
-                    <p className="text-sm text-slate-600 leading-relaxed">
-                      {skill.description}
-                    </p>
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+              <p className="text-slate-600 mt-2">در حال بارگذاری...</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {skills.map((skill) => (
+                <div
+                  key={skill.id}
+                  onClick={() => handleSkillSelect(skill.id)}
+                  className={`bg-white rounded-2xl p-4 shadow-sm border-2 cursor-pointer transition-all ${
+                    selectedSkill === skill.id
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-slate-200 hover:border-blue-300'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-1 ${
+                      selectedSkill === skill.id
+                        ? 'border-blue-500 bg-blue-500'
+                        : 'border-slate-300'
+                    }`}>
+                      {selectedSkill === skill.id && (
+                        <CheckCircle className="w-4 h-4 text-white fill-current" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-slate-900 mb-1">{skill.name}</h4>
+                      <p className="text-sm text-slate-600 leading-relaxed">
+                        {skill.description}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Features Cards */}
@@ -183,10 +209,10 @@ const Index = () => {
         <div className="space-y-4">
           <Button 
             onClick={handleStartTest}
-            disabled={selectedSkills.length === 0}
+            disabled={!selectedSkill}
             className="w-full h-14 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white text-lg font-semibold rounded-2xl shadow-lg btn-press"
           >
-            <span>شروع ارزیابی ({selectedSkills.length} مهارت انتخاب شده)</span>
+            <span>شروع ارزیابی</span>
             <ArrowRight className="w-5 h-5 mr-2" />
           </Button>
           
