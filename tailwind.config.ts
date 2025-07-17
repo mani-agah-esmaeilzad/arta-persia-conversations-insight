@@ -56,6 +56,28 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				'executive-navy': {
+					DEFAULT: 'hsl(var(--executive-navy))',
+					light: 'hsl(var(--executive-navy-light))',
+					dark: 'hsl(var(--executive-navy-dark))'
+				},
+				'executive-gold': {
+					DEFAULT: 'hsl(var(--executive-gold))',
+					light: 'hsl(var(--executive-gold-light))'
+				},
+				'executive-silver': {
+					DEFAULT: 'hsl(var(--executive-silver))',
+					dark: 'hsl(var(--executive-silver-dark))'
+				},
+				'executive-charcoal': {
+					DEFAULT: 'hsl(var(--executive-charcoal))',
+					light: 'hsl(var(--executive-charcoal-light))'
+				},
+				'executive-pearl': 'hsl(var(--executive-pearl))',
+				'executive-ash': {
+					DEFAULT: 'hsl(var(--executive-ash))',
+					light: 'hsl(var(--executive-ash-light))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',

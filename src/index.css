@@ -6,34 +6,34 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 0 0% 9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 0 0% 9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 0 0% 9%;
 
-    --primary: 220 70% 50%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 231 73% 28%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 210 40% 96.1%;
+    --secondary: 210 17% 95%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
+    --muted: 214 27% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220 8.9% 46.1%;
+    --accent: 214 27% 96%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 220 70% 50%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 231 73% 28%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -44,11 +44,29 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 220 70% 50%;
 
-    /* Corporate Colors */
-    --corporate-blue: 220 100% 50%;
-    --corporate-navy: 220 100% 25%;
-    --corporate-gray: 220 13% 46%;
-    --corporate-light: 220 13% 95%;
+    /* Executive Theme Colors */
+    --executive-navy: 231 73% 28%;
+    --executive-navy-light: 231 35% 45%;
+    --executive-navy-dark: 231 90% 15%;
+    --executive-gold: 39 97% 62%;
+    --executive-gold-light: 39 65% 85%;
+    --executive-silver: 216 12% 84%;
+    --executive-silver-dark: 216 33% 44%;
+    --executive-charcoal: 215 28% 17%;
+    --executive-charcoal-light: 214 13% 24%;
+    --executive-pearl: 0 0% 98%;
+    --executive-ash: 220 9% 46%;
+    --executive-ash-light: 220 13% 91%;
+    
+    /* Gradients */
+    --gradient-executive: linear-gradient(135deg, hsl(var(--executive-navy)), hsl(var(--executive-navy-light)));
+    --gradient-luxury: linear-gradient(135deg, hsl(var(--executive-charcoal)), hsl(var(--executive-navy)));
+    --gradient-elegant: linear-gradient(180deg, hsl(var(--executive-pearl)), hsl(var(--executive-silver)));
+    
+    /* Shadows */
+    --shadow-executive: 0 20px 25px -5px hsl(var(--executive-navy) / 0.1), 0 10px 10px -5px hsl(var(--executive-navy) / 0.04);
+    --shadow-luxury: 0 25px 50px -12px hsl(var(--executive-charcoal) / 0.25);
+    --shadow-subtle: 0 4px 6px -1px hsl(var(--executive-ash) / 0.1), 0 2px 4px -1px hsl(var(--executive-ash) / 0.06);
   }
 
   .dark {

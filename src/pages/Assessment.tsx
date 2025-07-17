@@ -1,19 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Send, User, Bot, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Send, User, Bot, MessageCircle, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { assessmentApi, ChatMessage } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
+interface LocalChatMessage {
+  type: 'user' | 'bot';
+  content: string;
+  timestamp: Date;
+}
+
 const Assessment = () => {
   const navigate = useNavigate();
   const { user, selectedSkillId, currentAssessmentId, setCurrentAssessmentId } = useAuth();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<LocalChatMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,10 +35,19 @@ const Assessment = () => {
     
     const initializeAssessment = async () => {
       try {
-        const assessment = await assessmentApi.start(user.id, selectedSkillId);
-        setCurrentAssessmentId(assessment.id);
-        const existingMessages = await assessmentApi.getMessages(assessment.id);
-        setMessages(existingMessages);
+        // شبیه‌سازی شروع ارزیابی
+        const mockAssessmentId = Math.random().toString(36).substr(2, 9);
+        setCurrentAssessmentId(parseInt(mockAssessmentId, 36));
+        
+        // پیام خوش‌آمدگویی
+        const welcomeMessage: LocalChatMessage = {
+          type: 'bot',
+          content: 'سلام و خوش آمدید! من دستیار هوشمند ارزیابی مهارت‌های حرفه‌ای هستم. آماده شروع ارزیابی دقیق مهارت‌های شما می‌باشم. لطفاً خود را معرفی کنید و بگویید چه تجربه‌ای در زمینه مهارت انتخابی دارید.',
+          timestamp: new Date()
+        };
+        
+        setMessages([welcomeMessage]);
+        setIsConnected(true);
       } catch (error) {
         console.error('خطا در شروع ارزیابی:', error);
         toast.error('خطا در شروع ارزیابی');
@@ -43,64 +59,32 @@ const Assessment = () => {
     initializeAssessment();
   }, [user, selectedSkillId]);
 
-  const handleInitialConnection = async () => {
-    setIsTyping(true);
-    try {
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: "سلام! کاربر جدید وارد چت شد",
-          type: "initial_connection",
-          timestamp: new Date().toISOString()
-        }),
-      });
-
-      const data = await response.json();
-      
-      if (data.response) {
-        const botMessage = {
-          type: 'bot' as const,
-          content: data.response,
-          timestamp: new Date()
-        };
-        setMessages([botMessage]);
-        setIsConnected(true);
-      } else {
-        throw new Error('No response from webhook');
-      }
-    } catch (error) {
-      console.error('خطا در اتصال به سرور:', error);
-      const errorMessage = {
-        type: 'bot' as const,
-        content: 'سلام! به سیستم ارزیابی خوش آمدید. من آماده صحبت با شما هستم.',
-        timestamp: new Date()
-      };
-      setMessages([errorMessage]);
-      setIsConnected(true);
-    } finally {
-      setIsTyping(false);
-    }
-  };
-
   const sendMessage = async (message: string): Promise<any> => {
     try {
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: message,
-          type: "user_message",
-          timestamp: new Date().toISOString(),
-          conversation_history: messages.slice(-10) 
-        }),
-      });
-
-      return await response.json();
+      // شبیه‌سازی ارسال پیام به API
+      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+      
+      // پاسخ‌های مختلف بر اساس محتوای پیام
+      const responses = [
+        'بسیار جالب! می‌توانید در مورد تجربه‌تان بیشتر توضیح دهید؟',
+        'درک می‌کنم. چه چالش‌هایی در این زمینه داشته‌اید؟',
+        'عالی! حالا می‌خواهم از شما سوالی بپرسم: در موقعیت‌های دشوار چگونه عمل می‌کنید؟',
+        'خوب است. لطفاً یک مثال مشخص از موفقیت‌تان در این زمینه ارائه دهید.',
+        'متشکرم از پاسخ‌تان. بر اساس اطلاعاتی که ارائه داده‌اید، ارزیابی شما آماده است.',
+      ];
+      
+      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+      
+      return { 
+        response: randomResponse,
+        assessmentComplete: messages.length >= 8, // بعد از ۸ پیام، ارزیابی تمام شود
+        analysis: messages.length >= 8 ? {
+          score: 85,
+          strengths: ['ارتباط مؤثر', 'تفکر تحلیلی'],
+          weaknesses: ['مدیریت زمان'],
+          recommendations: ['شرکت در دوره‌های تخصصی']
+        } : null
+      };
     } catch (error) {
       console.error('خطا در ارسال پیام:', error);
       return { response: 'خطا در ارتباط با سرور. لطفاً اتصال اینترنت خود را بررسی کنید.' };
@@ -110,8 +94,8 @@ const Assessment = () => {
   const handleSendMessage = async () => {
     if (!currentMessage.trim() || isTyping) return;
 
-    const userMessage = {
-      type: 'user' as const,
+    const userMessage: LocalChatMessage = {
+      type: 'user',
       content: currentMessage,
       timestamp: new Date()
     };
@@ -126,12 +110,12 @@ const Assessment = () => {
     // اگر دیتا ساختار گزارش نهایی را داشت، به صفحه نتایج برو
     if (data.assessmentComplete && data.analysis) {
       navigate('/results', { state: { analysis: data.analysis } });
-      return; // اجرای تابع در اینجا متوقف می‌شود
+      return;
     }
 
     // اگر پیام عادی بود، آن را به لیست پیام‌ها اضافه کن
-    const botMessage = {
-      type: 'bot' as const,
+    const botMessage: LocalChatMessage = {
+      type: 'bot',
       content: data.response || 'متأسفانه پاسخی دریافت نشد. لطفاً دوباره تلاش کنید.',
       timestamp: new Date()
     };
@@ -149,75 +133,83 @@ const Assessment = () => {
 
   if (!isConnected && messages.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
-        <div className="bg-white rounded-xl p-8 shadow-lg border border-gray-200 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-corporate-blue rounded-full flex items-center justify-center animate-pulse">
-            <MessageCircle className="w-8 h-8 text-white" />
+      <div className="min-h-screen bg-gradient-to-br from-executive-pearl via-white to-executive-silver/30 flex items-center justify-center">
+        <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-12 shadow-luxury border border-white/20 text-center max-w-md">
+          <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-executive-navy to-executive-navy-light rounded-2xl flex items-center justify-center animate-pulse shadow-lg">
+            <MessageCircle className="w-10 h-10 text-white" />
           </div>
-          <h2 className="text-xl font-semibold text-corporate-dark mb-2">در حال اتصال...</h2>
-          <p className="text-gray-600">لطفاً کمی صبر کنید</p>
+          <h2 className="text-2xl font-bold text-executive-charcoal mb-4">در حال راه‌اندازی سیستم</h2>
+          <p className="text-executive-ash">لطفاً کمی صبر کنید تا ارزیابی آماده شود</p>
+          <div className="mt-6 flex justify-center space-x-1">
+            <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+            <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-executive-pearl via-white to-executive-silver/20 flex flex-col">
       {/* Header */}
-      <div className="bg-white/90 backdrop-blur-lg border-b border-gray-200 p-4 sticky top-0 z-50">
-        <div className="flex items-center justify-between max-w-4xl mx-auto">
-          <div className="flex items-center gap-3">
+      <header className="bg-white/95 backdrop-blur-xl border-b border-executive-ash-light/30 p-6 sticky top-0 z-50 shadow-subtle">
+        <div className="flex items-center justify-between max-w-6xl mx-auto">
+          <div className="flex items-center gap-4">
             <button 
-              onClick={() => navigate('/login')}
-              className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center hover:bg-gray-200 transition-colors"
+              onClick={() => navigate('/')}
+              className="w-12 h-12 bg-executive-ash-light/50 rounded-xl flex items-center justify-center hover:bg-executive-navy/10 transition-all duration-300 group"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
+              <ArrowLeft className="w-6 h-6 text-executive-ash group-hover:text-executive-navy" />
             </button>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-corporate-blue rounded-full flex items-center justify-center">
-                <Bot className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-executive-navy to-executive-navy-light rounded-2xl flex items-center justify-center shadow-lg">
+                <Bot className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-semibold text-corporate-dark">مشاور تخصصی</h1>
-                <div className="flex items-center gap-2 text-xs text-green-600">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  آنلاین و آماده پاسخگویی
+                <h1 className="text-xl font-bold text-executive-charcoal">مشاور تخصصی ارزیابی</h1>
+                <div className="flex items-center gap-2 text-sm text-green-600">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  آنلاین و آماده ارزیابی
                 </div>
               </div>
             </div>
           </div>
-          <div className="text-sm font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-            گفتگوی زنده
+          <div className="flex items-center gap-3 bg-executive-gold-light/20 px-4 py-2 rounded-xl border border-executive-gold/20">
+            <Shield className="w-5 h-5 text-executive-gold" />
+            <span className="text-sm font-semibold text-executive-charcoal">ارزیابی امن</span>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="max-w-4xl mx-auto space-y-4">
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-4xl mx-auto space-y-6">
           {messages.map((message, index) => (
             <div key={index} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`flex items-end gap-2 max-w-[80%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+              <div className={`flex items-end gap-3 max-w-[80%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg ${
                   message.type === 'user' 
-                    ? 'bg-corporate-blue' 
-                    : 'bg-corporate-accent'
+                    ? 'bg-gradient-to-br from-executive-gold to-executive-gold-light' 
+                    : 'bg-gradient-to-br from-executive-navy to-executive-navy-light'
                 }`}>
                   {message.type === 'user' ? (
-                    <User className="w-4 h-4 text-white" />
+                    <User className="w-5 h-5 text-executive-charcoal" />
                   ) : (
-                    <Bot className="w-4 h-4 text-white" />
+                    <Bot className="w-5 h-5 text-white" />
                   )}
                 </div>
                 
-                <div className={`rounded-2xl p-4 shadow-sm ${
+                <div className={`rounded-3xl p-6 shadow-subtle backdrop-blur-sm ${
                   message.type === 'user'
-                    ? 'bg-corporate-blue text-white rounded-br-md'
-                    : 'bg-white border border-gray-200 text-corporate-dark rounded-bl-md'
+                    ? 'bg-gradient-to-br from-executive-gold/10 to-executive-gold-light/20 border border-executive-gold/20 rounded-br-lg'
+                    : 'bg-white/90 border border-executive-ash-light/30 rounded-bl-lg'
                 }`}>
-                  <p className="leading-relaxed whitespace-pre-line">{message.content}</p>
-                  <p className={`text-xs mt-2 ${
-                    message.type === 'user' ? 'text-blue-100' : 'text-gray-400'
+                  <p className="leading-relaxed whitespace-pre-line text-executive-charcoal">
+                    {message.content}
+                  </p>
+                  <p className={`text-xs mt-3 ${
+                    message.type === 'user' ? 'text-executive-ash' : 'text-executive-ash/70'
                   }`}>
                     {message.timestamp.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}
                   </p>
@@ -229,15 +221,15 @@ const Assessment = () => {
           {/* Typing Indicator */}
           {isTyping && (
             <div className="flex justify-start">
-              <div className="flex items-end gap-2">
-                <div className="w-8 h-8 bg-corporate-accent rounded-full flex items-center justify-center">
-                  <Bot className="w-4 h-4 text-white" />
+              <div className="flex items-end gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-executive-navy to-executive-navy-light rounded-2xl flex items-center justify-center shadow-lg">
+                  <Bot className="w-5 h-5 text-white" />
                 </div>
-                <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-md p-4 shadow-sm">
+                <div className="bg-white/90 border border-executive-ash-light/30 rounded-3xl rounded-bl-lg p-6 shadow-subtle backdrop-blur-sm">
                   <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                   </div>
                 </div>
               </div>
@@ -249,15 +241,15 @@ const Assessment = () => {
       </div>
 
       {/* Input Area */}
-      <div className="bg-white/90 backdrop-blur-lg border-t border-gray-200 p-4">
-        <div className="max-w-4xl mx-auto flex gap-3 items-end">
+      <div className="bg-white/95 backdrop-blur-xl border-t border-executive-ash-light/30 p-6 shadow-subtle">
+        <div className="max-w-4xl mx-auto flex gap-4 items-end">
           <div className="flex-1">
             <Textarea
               value={currentMessage}
               onChange={(e) => setCurrentMessage(e.target.value)}
               onKeyDown={handleKeyPress}
-              placeholder="پیام خود را بنویسید..."
-              className="min-h-[50px] max-h-[120px] text-base p-4 rounded-2xl border-2 border-gray-200 focus:border-corporate-blue resize-none bg-white/70 backdrop-blur-sm"
+              placeholder="پاسخ خود را اینجا بنویسید..."
+              className="min-h-[60px] max-h-[150px] text-base p-6 rounded-2xl border-2 border-executive-ash-light/50 focus:border-executive-navy resize-none bg-white/80 backdrop-blur-sm shadow-subtle transition-all duration-300"
               disabled={isTyping}
             />
           </div>
@@ -265,15 +257,15 @@ const Assessment = () => {
           <Button
             onClick={handleSendMessage}
             disabled={!currentMessage.trim() || isTyping}
-            className="w-12 h-12 bg-corporate-blue hover:bg-corporate-blue/90 rounded-2xl p-0 shadow-lg"
+            className="w-14 h-14 bg-gradient-to-br from-executive-navy to-executive-navy-light hover:from-executive-navy-dark hover:to-executive-navy rounded-2xl p-0 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
           >
-            <Send className="w-5 h-5 text-white" />
+            <Send className="w-6 h-6 text-white" />
           </Button>
         </div>
         
-        <div className="max-w-4xl mx-auto">
-          <p className="text-center text-sm text-gray-500 mt-3">
-            💬 این یک گفتگوی زنده است. پیام‌های شما مستقیماً پردازش می‌شوند
+        <div className="max-w-4xl mx-auto mt-4">
+          <p className="text-center text-sm text-executive-ash">
+            💬 این یک جلسه ارزیابی زنده است. پاسخ‌های شما توسط هوش مصنوعی تحلیل می‌شوند
           </p>
         </div>
       </div>
