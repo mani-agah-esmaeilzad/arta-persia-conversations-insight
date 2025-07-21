@@ -22,10 +22,10 @@ const Index = () => {
         console.error('خطا در دریافت مهارت‌ها:', error);
         // Mock data برای نمایش
         setSkills([
-          { id: 1, name: 'مهارت‌های ارتباطی', description: 'ارزیابی توانایی برقراری ارتباط مؤثر', category: 'soft-skills', isActive: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-          { id: 2, name: 'رهبری و مدیریت', description: 'سنجش قابلیت‌های رهبری و مدیریت تیم', category: 'leadership', isActive: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-          { id: 3, name: 'حل مسئله', description: 'ارزیابی توانایی تحلیل و حل مسائل پیچیده', category: 'analytical', isActive: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-          { id: 4, name: 'کار تیمی', description: 'سنجش مهارت همکاری و کار گروهی', category: 'collaboration', isActive: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+          { id: 1, name: 'مهارت‌های ارتباطی', description: 'ارزیابی توانایی برقراری ارتباط مؤثر' },
+          { id: 2, name: 'رهبری و مدیریت', description: 'سنجش قابلیت‌های رهبری و مدیریت تیم' },
+          { id: 3, name: 'حل مسئله', description: 'ارزیابی توانایی تحلیل و حل مسائل پیچیده' },
+          { id: 4, name: 'کار تیمی', description: 'سنجش مهارت همکاری و کار گروهی' },
         ]);
       } finally {
         setLoading(false);

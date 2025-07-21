@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { assessmentApi, ChatMessage } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import ChatCharacter from '@/components/ChatCharacter';
 
 interface LocalChatMessage {
   type: 'user' | 'bot';
@@ -186,26 +187,28 @@ const Assessment = () => {
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-4xl mx-auto space-y-6">
           {messages.map((message, index) => (
-            <div key={index} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`flex items-end gap-3 max-w-[80%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg ${
-                  message.type === 'user' 
-                    ? 'bg-gradient-to-br from-executive-gold to-executive-gold-light' 
-                    : 'bg-gradient-to-br from-executive-navy to-executive-navy-light'
-                }`}>
-                  {message.type === 'user' ? (
-                    <User className="w-5 h-5 text-executive-charcoal" />
-                  ) : (
-                    <Bot className="w-5 h-5 text-white" />
-                  )}
+            <div key={index} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} items-end gap-6 mb-8`}>
+              <div className={`flex items-end gap-4 max-w-[70%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                <div className="flex-shrink-0">
+                  <ChatCharacter 
+                    type={message.type === 'user' ? 'user' : 'ai'} 
+                    isSpeaking={false}
+                  />
                 </div>
                 
-                <div className={`rounded-3xl p-6 shadow-subtle backdrop-blur-sm ${
+                <div className={`rounded-3xl p-6 shadow-subtle backdrop-blur-sm relative ${
                   message.type === 'user'
                     ? 'bg-gradient-to-br from-executive-gold/10 to-executive-gold-light/20 border border-executive-gold/20 rounded-br-lg'
                     : 'bg-white/90 border border-executive-ash-light/30 rounded-bl-lg'
                 }`}>
-                  <p className="leading-relaxed whitespace-pre-line text-executive-charcoal">
+                  {/* Speech bubble tail */}
+                  <div className={`absolute bottom-4 w-4 h-4 transform rotate-45 ${
+                    message.type === 'user' 
+                      ? 'right-[-8px] bg-gradient-to-br from-executive-gold/10 to-executive-gold-light/20 border-r border-b border-executive-gold/20'
+                      : 'left-[-8px] bg-white/90 border-l border-b border-executive-ash-light/30'
+                  }`}></div>
+                  
+                  <p className="leading-relaxed whitespace-pre-line text-executive-charcoal text-lg">
                     {message.content}
                   </p>
                   <p className={`text-xs mt-3 ${
@@ -220,16 +223,17 @@ const Assessment = () => {
 
           {/* Typing Indicator */}
           {isTyping && (
-            <div className="flex justify-start">
-              <div className="flex items-end gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-executive-navy to-executive-navy-light rounded-2xl flex items-center justify-center shadow-lg">
-                  <Bot className="w-5 h-5 text-white" />
+            <div className="flex justify-start items-end gap-6 mb-8">
+              <div className="flex items-end gap-4">
+                <div className="flex-shrink-0">
+                  <ChatCharacter type="ai" isTyping={true} isSpeaking={false} />
                 </div>
-                <div className="bg-white/90 border border-executive-ash-light/30 rounded-3xl rounded-bl-lg p-6 shadow-subtle backdrop-blur-sm">
+                <div className="bg-white/90 border border-executive-ash-light/30 rounded-3xl rounded-bl-lg p-6 shadow-subtle backdrop-blur-sm relative">
+                  <div className="absolute left-[-8px] bottom-4 w-4 h-4 bg-white/90 border-l border-b border-executive-ash-light/30 transform rotate-45"></div>
                   <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    <div className="w-3 h-3 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-3 h-3 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-3 h-3 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                   </div>
                 </div>
               </div>
