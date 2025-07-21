@@ -2,55 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Target, Users, Award, TrendingUp, Shield, Sparkles, ChevronRight, Star, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { skillsApi, Skill } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
+
 
 const Index = () => {
   const navigate = useNavigate();
   const { user, setSelectedSkillId } = useAuth();
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedSkill, setSelectedSkill] = useState<number | null>(null);
 
-  useEffect(() => {
-    const fetchSkills = async () => {
-      try {
-        const skillsData = await skillsApi.getAll();
-        setSkills(skillsData);
-      } catch (error) {
-        console.error('خطا در دریافت مهارت‌ها:', error);
-        // Mock data برای نمایش
-        setSkills([
-          { id: 1, name: 'مهارت‌های ارتباطی', description: 'ارزیابی توانایی برقراری ارتباط مؤثر' },
-          { id: 2, name: 'رهبری و مدیریت', description: 'سنجش قابلیت‌های رهبری و مدیریت تیم' },
-          { id: 3, name: 'حل مسئله', description: 'ارزیابی توانایی تحلیل و حل مسائل پیچیده' },
-          { id: 4, name: 'کار تیمی', description: 'سنجش مهارت همکاری و کار گروهی' },
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSkills();
-  }, []);
-
-  const handleSkillSelect = (skillId: number) => {
-    setSelectedSkill(skillId);
-    setSelectedSkillId(skillId);
-  };
 
   const handleStartAssessment = () => {
-    if (!selectedSkill) {
-      toast.error('لطفاً یک مهارت انتخاب کنید');
-      return;
-    }
-
     if (!user) {
       navigate('/login');
       return;
     }
 
+    // Set a default skill ID since we only have one assessment
+    setSelectedSkillId(1);
     navigate('/assessment');
   };
 
@@ -143,83 +110,23 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Skills Selection */}
-        <section className="mb-16">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-executive-charcoal mb-4">مهارت مورد نظر خود را انتخاب کنید</h3>
-            <p className="text-executive-ash text-lg">برای شروع ارزیابی، یکی از مهارت‌های زیر را انتخاب نمایید</p>
-          </div>
-
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-executive-ash-light/30 animate-pulse">
-                  <div className="w-12 h-12 bg-executive-ash-light rounded-xl mb-4"></div>
-                  <div className="h-6 bg-executive-ash-light rounded mb-2"></div>
-                  <div className="h-4 bg-executive-ash-light rounded w-3/4"></div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-              {skills.map((skill) => (
-                <div
-                  key={skill.id}
-                  onClick={() => handleSkillSelect(skill.id)}
-                  className={`group relative bg-white/80 backdrop-blur-sm rounded-2xl p-8 border-2 transition-all duration-300 cursor-pointer transform hover:scale-[1.02] shadow-subtle hover:shadow-executive ${
-                    selectedSkill === skill.id
-                      ? 'border-executive-navy bg-gradient-to-br from-executive-navy/5 to-executive-gold/5 shadow-executive'
-                      : 'border-executive-ash-light/50 hover:border-executive-navy/30'
-                  }`}
-                >
-                  {selectedSkill === skill.id && (
-                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-executive-gold rounded-full flex items-center justify-center shadow-lg">
-                      <Star className="w-3 h-3 text-executive-charcoal" fill="currentColor" />
-                    </div>
-                  )}
-                  
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 ${
-                      selectedSkill === skill.id 
-                        ? 'bg-gradient-to-br from-executive-navy to-executive-navy-light text-white' 
-                        : 'bg-executive-ash-light/50 text-executive-ash group-hover:bg-executive-navy/10 group-hover:text-executive-navy'
-                    }`}>
-                      <Target className="w-7 h-7" />
-                    </div>
-                    <ChevronRight className={`w-5 h-5 transition-all duration-300 ${
-                      selectedSkill === skill.id ? 'text-executive-navy' : 'text-executive-ash group-hover:text-executive-navy'
-                    }`} />
-                  </div>
-                  
-                  <h4 className="text-xl font-bold text-executive-charcoal mb-3 group-hover:text-executive-navy transition-colors">
-                    {skill.name}
-                  </h4>
-                  <p className="text-executive-ash leading-relaxed">
-                    {skill.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Start Button */}
-        <div className="text-center">
-          <Button
-            onClick={handleStartAssessment}
-            disabled={!selectedSkill}
-            className="bg-gradient-to-r from-executive-navy to-executive-navy-light text-white px-12 py-4 text-lg font-semibold rounded-2xl shadow-luxury hover:shadow-executive transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-          >
-            شروع ارزیابی
-            <ArrowRight className="w-6 h-6 mr-3" />
-          </Button>
-          
-          {!selectedSkill && (
-            <p className="text-executive-ash text-sm mt-4">
-              برای شروع ارزیابی، ابتدا یک مهارت انتخاب کنید
+        {/* Call to Action */}
+        <section className="text-center">
+          <div className="max-w-2xl mx-auto mb-12">
+            <h3 className="text-3xl font-bold text-executive-charcoal mb-6">آماده شروع ارزیابی هستید؟</h3>
+            <p className="text-executive-ash text-lg mb-8">
+              با هوش مصنوعی پیشرفته، مهارت‌های حرفه‌ای خود را ارزیابی کنید و راهکارهای بهبود دریافت نمایید
             </p>
-          )}
-        </div>
+            
+            <Button
+              onClick={handleStartAssessment}
+              className="bg-gradient-to-r from-executive-navy to-executive-navy-light text-white px-16 py-6 text-xl font-bold rounded-2xl shadow-luxury hover:shadow-executive transition-all duration-300 transform hover:scale-105"
+            >
+              شروع ارزیابی هوشمند
+              <ArrowRight className="w-8 h-8 mr-4" />
+            </Button>
+          </div>
+        </section>
 
         {/* Features */}
         <section className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">

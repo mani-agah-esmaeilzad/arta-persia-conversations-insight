@@ -188,11 +188,11 @@ const Assessment = () => {
         <div className="max-w-4xl mx-auto space-y-6">
           {messages.map((message, index) => (
             <div key={index} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} items-end gap-6 mb-8`}>
-              <div className={`flex items-end gap-4 max-w-[70%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+              <div className={`flex items-end gap-6 max-w-[85%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                 <div className="flex-shrink-0">
                   <ChatCharacter 
                     type={message.type === 'user' ? 'user' : 'ai'} 
-                    isSpeaking={false}
+                    isSpeaking={index === messages.length - 1 && message.type === 'bot'}
                   />
                 </div>
                 
