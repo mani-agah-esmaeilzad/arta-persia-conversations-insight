@@ -9,7 +9,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Assessment from "./pages/Assessment";
 import Results from "./pages/Results";
-import APIConfig from "./pages/APIConfig";
+import APIConfig from "@/pages/APIConfig";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
