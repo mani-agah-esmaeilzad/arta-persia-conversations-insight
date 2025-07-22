@@ -41,7 +41,7 @@ const Assessment = () => {
     // ===================================================================
     // آدرس وب‌سوکت N8N خود را در اینجا قرار دهید
     // ===================================================================
-    const N8N_WEBSOCKET_URL = 'ws://YOUR_N8N_INSTANCE_URL/webhook/YOUR_SOCKET_PATH';
+    const N8N_WEBSOCKET_URL = 'https://cofe-code.com/webhook/moshaver';
 
     ws.current = new WebSocket(N8N_WEBSOCKET_URL);
 
