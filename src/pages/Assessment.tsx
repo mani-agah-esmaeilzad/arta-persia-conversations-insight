@@ -38,7 +38,7 @@ const Assessment = () => {
       return;
     }
 
-    const N8N_WEBSOCKET_URL = 'wss://cofe-code.com/webhook/moshaver';
+    const N8N_WEBSOCKET_URL = 'https://cofe-code.com/webhook/moshaver';
 
     ws.current = new WebSocket(N8N_WEBSOCKET_URL);
 
