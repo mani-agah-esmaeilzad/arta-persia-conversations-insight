@@ -38,32 +38,36 @@ const Assessment = () => {
       return;
     }
 
-    const N8N_WEBSOCKET_URL = 'https://cofe-code.com/webhook/moshaver';
+    // آدرس وب‌سوکت امن (wss) شما
+    const N8N_WEBSOCKET_URL = 'wss://cofe-code.com/webhook/moshaver';
 
     ws.current = new WebSocket(N8N_WEBSOCKET_URL);
 
-    // ===================================================================
-    // تغییر اصلی: ارسال پیام "شروع کنیم" پس از اتصال موفق
-    // ===================================================================
+    // ارسال پیام "شروع کنیم" پس از اتصال موفق
     ws.current.onopen = () => {
       console.log('WebSocket connection established');
       setIsConnected(true);
       setLoading(false);
       toast.success('اتصال برقرار شد. در حال شروع سناریو...');
 
-      // ارسال پیام اولیه برای شروع مکالمه به N8N
       if (ws.current) {
-        ws.current.send(JSON.stringify({
-          type: 'start_conversation',
-          content: 'شروع کنیم'
-        }));
+        // ساختار پیام بر اساس چیزی که ورک‌فلو شما انتظار دارد
+        const startMessage = {
+          body: {
+            message: "شروع کنیم"
+          }
+        };
+        ws.current.send(JSON.stringify(startMessage));
         setIsTyping(true); // نمایش نشانگر تایپ تا زمان دریافت اولین پیام
       }
     };
 
     ws.current.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
+        // ورک‌فلو شما یک JSON با کلید response برمی‌گرداند، پس باید آن را باز کنیم
+        const rawData = JSON.parse(event.data);
+        const data = JSON.parse(rawData.response);
+
         setIsTyping(false); 
 
         if (data.analysis) {
@@ -126,9 +130,11 @@ const Assessment = () => {
     
     setMessages(prev => [...prev, userMessage]);
     
+    // ارسال پیام کاربر با ساختاری که ورک‌فلو انتظار دارد
     ws.current.send(JSON.stringify({
-      type: 'user_message',
-      content: currentMessage
+      body: {
+        message: currentMessage
+      }
     }));
     
     setCurrentMessage('');
