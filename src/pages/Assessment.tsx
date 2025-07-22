@@ -39,9 +39,9 @@ const Assessment = () => {
     }
 
     // ===================================================================
-    // آدرس وب‌سوکت امن N8N خود را با wss:// در اینجا قرار دهید
+    // آدرس وب‌سوکت شما در اینجا قرار داده شد
     // ===================================================================
-    const N8N_WEBSOCKET_URL = 'wss://cofe-code.com/webhook/moshaver'; // <-- **تغییر اصلی اینجاست**
+    const N8N_WEBSOCKET_URL = 'wss://cofe-code.com/webhook/moshaver';
 
     ws.current = new WebSocket(N8N_WEBSOCKET_URL);
 
@@ -49,12 +49,23 @@ const Assessment = () => {
       console.log('WebSocket connection established');
       setIsConnected(true);
       setLoading(false);
-      toast.success('اتصال برقرار شد.');
+      toast.success('اتصال برقرار شد. در حال شروع سناریو...');
+
+      // ارسال پیام اولیه برای شروع مکالمه به N8N
+      if (ws.current) {
+        ws.current.send(JSON.stringify({
+          type: 'start_conversation',
+          userId: user?.id,
+          skillId: selectedSkillId
+        }));
+        setIsTyping(true); // نمایش نشانگر تایپ تا زمان دریافت اولین پیام
+      }
     };
 
     ws.current.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        setIsTyping(false); // با دریافت اولین پیام، تایپینگ را متوقف کن
 
         if (data.analysis) {
           toast.info('ارزیابی تکمیل شد! در حال انتقال به صفحه نتایج...');
@@ -74,12 +85,11 @@ const Assessment = () => {
               setMessages((prev) => [...prev, aiMessage]);
             }, index * 1500);
           });
-        }
-        
-        setTimeout(() => {
+          
+          setTimeout(() => {
             setIsTyping(false);
-        }, data.messages.length * 1500);
-
+          }, data.messages.length * 1500);
+        }
       } catch (error) {
         console.error("Error parsing WebSocket message:", error);
         toast.error("پیام دریافتی از سرور معتبر نبود.");
