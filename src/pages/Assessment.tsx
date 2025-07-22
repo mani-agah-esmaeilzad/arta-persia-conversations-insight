@@ -9,9 +9,10 @@ import { toast } from 'sonner';
 import ChatCharacter from '@/components/ChatCharacter';
 
 interface LocalChatMessage {
-  type: 'user' | 'bot';
+  type: 'user' | 'ai1' | 'ai2';
   content: string;
   timestamp: Date;
+  character?: string;
 }
 
 const Assessment = () => {
@@ -40,14 +41,23 @@ const Assessment = () => {
         const mockAssessmentId = Math.random().toString(36).substr(2, 9);
         setCurrentAssessmentId(parseInt(mockAssessmentId, 36));
         
-        // پیام خوش‌آمدگویی
-        const welcomeMessage: LocalChatMessage = {
-          type: 'bot',
-          content: 'سلام و خوش آمدید! من دستیار هوشمند ارزیابی مهارت‌های حرفه‌ای هستم. آماده شروع ارزیابی دقیق مهارت‌های شما می‌باشم. لطفاً خود را معرفی کنید و بگویید چه تجربه‌ای در زمینه مهارت انتخابی دارید.',
-          timestamp: new Date()
-        };
+        // پیام‌های خوش‌آمدگویی از دو کاراکتر AI
+        const welcomeMessages: LocalChatMessage[] = [
+          {
+            type: 'ai1',
+            content: 'سلام! من سارا هستم، مربی و مشاور شما در این جلسه. خوشحالم که اینجا هستید! 😊',
+            timestamp: new Date(),
+            character: 'سارا - مربی'
+          },
+          {
+            type: 'ai2',
+            content: 'و من علی هستم، متخصص تحلیل رفتار. در این جلسه با هم یک سناریوی واقعی از محیط کار را تجربه خواهیم کرد. آماده‌اید؟',
+            timestamp: new Date(Date.now() + 2000),
+            character: 'علی - تحلیلگر'
+          }
+        ];
         
-        setMessages([welcomeMessage]);
+        setMessages(welcomeMessages);
         setIsConnected(true);
       } catch (error) {
         console.error('خطا در شروع ارزیابی:', error);
@@ -65,25 +75,39 @@ const Assessment = () => {
       // شبیه‌سازی ارسال پیام به API
       await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
       
-      // پاسخ‌های مختلف بر اساس محتوای پیام
-      const responses = [
-        'بسیار جالب! می‌توانید در مورد تجربه‌تان بیشتر توضیح دهید؟',
-        'درک می‌کنم. چه چالش‌هایی در این زمینه داشته‌اید؟',
-        'عالی! حالا می‌خواهم از شما سوالی بپرسم: در موقعیت‌های دشوار چگونه عمل می‌کنید؟',
-        'خوب است. لطفاً یک مثال مشخص از موفقیت‌تان در این زمینه ارائه دهید.',
-        'متشکرم از پاسخ‌تان. بر اساس اطلاعاتی که ارائه داده‌اید، ارزیابی شما آماده است.',
+      // پاسخ‌های دو کاراکتر AI
+      const ai1Responses = [
+        'عالی! من فکر می‌کنم این نشان‌دهنده توانایی تحلیلی قوی شماست. علی، نظر شما چیست؟',
+        'بسیار جالب! این رویکرد شما واقعاً حرفه‌ای است. ',
+        'احساس می‌کنم شما در تصمیم‌گیری مهارت خوبی دارید.',
+        'از پاسخ‌تان متوجه شدم که در کار تیمی موثر هستید.'
       ];
       
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+      const ai2Responses = [
+        'کاملاً موافقم سارا. این رفتار نشان‌دهنده بلوغ عاطفی بالایی است.',
+        'نکته جالبی که علی مطرح کرد - چطور با استرس کار می‌کنید؟',
+        'بر اساس آنچه گفتید، به نظر رسید شما در مدیریت تعارض مهارت دارید.',
+        'سارا درست می‌گوید. حالا بگویید در شرایط بحرانی چگونه رفتار می‌کنید؟'
+      ];
+      
+      const messageCount = messages.length;
+      const shouldUseAI1 = messageCount % 2 === 1;
+      const responseArray = shouldUseAI1 ? ai1Responses : ai2Responses;
+      const character = shouldUseAI1 ? 'سارا - مربی' : 'علی - تحلیلگر';
+      const aiType = shouldUseAI1 ? 'ai1' : 'ai2';
+      
+      const randomResponse = responseArray[Math.floor(Math.random() * responseArray.length)];
       
       return { 
         response: randomResponse,
-        assessmentComplete: messages.length >= 8, // بعد از ۸ پیام، ارزیابی تمام شود
-        analysis: messages.length >= 8 ? {
+        character,
+        aiType,
+        assessmentComplete: messages.length >= 12, // بعد از ۱۲ پیام، ارزیابی تمام شود
+        analysis: messages.length >= 12 ? {
           score: 85,
-          strengths: ['ارتباط مؤثر', 'تفکر تحلیلی'],
-          weaknesses: ['مدیریت زمان'],
-          recommendations: ['شرکت در دوره‌های تخصصی']
+          strengths: ['ارتباط مؤثر', 'تفکر تحلیلی', 'کار تیمی'],
+          weaknesses: ['مدیریت زمان', 'ارائه عمومی'],
+          recommendations: ['شرکت در دوره‌های تخصصی ارائه', 'تمرین تکنیک‌های مدیریت زمان']
         } : null
       };
     } catch (error) {
@@ -115,13 +139,14 @@ const Assessment = () => {
     }
 
     // اگر پیام عادی بود، آن را به لیست پیام‌ها اضافه کن
-    const botMessage: LocalChatMessage = {
-      type: 'bot',
+    const aiMessage: LocalChatMessage = {
+      type: data.aiType || 'ai1',
       content: data.response || 'متأسفانه پاسخی دریافت نشد. لطفاً دوباره تلاش کنید.',
-      timestamp: new Date()
+      timestamp: new Date(),
+      character: data.character
     };
     
-    setMessages(prev => [...prev, botMessage]);
+    setMessages(prev => [...prev, aiMessage]);
     setIsTyping(false);
   };
 
@@ -168,10 +193,16 @@ const Assessment = () => {
                 <Bot className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-executive-charcoal">مشاور تخصصی ارزیابی</h1>
-                <div className="flex items-center gap-2 text-sm text-green-600">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  آنلاین و آماده ارزیابی
+                <h1 className="text-xl font-bold text-executive-charcoal">جلسه تعاملی سه‌نفره</h1>
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-2 text-blue-600">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    سارا (مربی)
+                  </div>
+                  <div className="flex items-center gap-2 text-green-600">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    علی (تحلیلگر)
+                  </div>
                 </div>
               </div>
             </div>
@@ -192,21 +223,34 @@ const Assessment = () => {
                 <div className="flex-shrink-0">
                   <ChatCharacter 
                     type={message.type === 'user' ? 'user' : 'ai'} 
-                    isSpeaking={index === messages.length - 1 && message.type === 'bot'}
+                    isSpeaking={index === messages.length - 1 && message.type !== 'user'}
                   />
                 </div>
                 
                 <div className={`rounded-3xl p-6 shadow-subtle backdrop-blur-sm relative ${
                   message.type === 'user'
                     ? 'bg-gradient-to-br from-executive-gold/10 to-executive-gold-light/20 border border-executive-gold/20 rounded-br-lg'
-                    : 'bg-white/90 border border-executive-ash-light/30 rounded-bl-lg'
+                    : message.type === 'ai1'
+                    ? 'bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50 rounded-bl-lg'
+                    : 'bg-gradient-to-br from-green-50 to-green-100/50 border border-green-200/50 rounded-bl-lg'
                 }`}>
                   {/* Speech bubble tail */}
                   <div className={`absolute bottom-4 w-4 h-4 transform rotate-45 ${
                     message.type === 'user' 
                       ? 'right-[-8px] bg-gradient-to-br from-executive-gold/10 to-executive-gold-light/20 border-r border-b border-executive-gold/20'
-                      : 'left-[-8px] bg-white/90 border-l border-b border-executive-ash-light/30'
+                      : message.type === 'ai1'
+                      ? 'left-[-8px] bg-gradient-to-br from-blue-50 to-blue-100/50 border-l border-b border-blue-200/50'
+                      : 'left-[-8px] bg-gradient-to-br from-green-50 to-green-100/50 border-l border-b border-green-200/50'
                   }`}></div>
+                  
+                  {message.character && (
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        message.type === 'ai1' ? 'bg-blue-500' : 'bg-green-500'
+                      }`}></div>
+                      <span className="text-xs font-semibold text-executive-charcoal">{message.character}</span>
+                    </div>
+                  )}
                   
                   <p className="leading-relaxed whitespace-pre-line text-executive-charcoal text-lg">
                     {message.content}

@@ -27,32 +27,99 @@ const APIConfigPanel = () => {
     {
       category: 'Authentication',
       items: [
-        { method: 'POST', path: '/auth/login', description: 'ورود کاربر با username/password' },
-        { method: 'POST', path: '/auth/register', description: 'ثبت نام کاربر جدید' },
-        { method: 'POST', path: '/auth/refresh', description: 'تجدید توکن احراز هویت' }
+        { 
+          method: 'POST', 
+          path: '/auth/login', 
+          description: 'ورود کاربر',
+          params: {
+            body: { username: 'string', password: 'string' },
+            response: { token: 'string', user: 'UserObject', expiresIn: 'number' }
+          }
+        },
+        { 
+          method: 'POST', 
+          path: '/auth/register', 
+          description: 'ثبت نام کاربر جدید',
+          params: {
+            body: { username: 'string', password: 'string', email: 'string', firstName: 'string', lastName: 'string' },
+            response: { success: 'boolean', message: 'string', userId: 'number' }
+          }
+        },
+        { 
+          method: 'POST', 
+          path: '/auth/refresh', 
+          description: 'تجدید توکن احراز هویت',
+          params: {
+            headers: { Authorization: 'Bearer {token}' },
+            response: { token: 'string', expiresIn: 'number' }
+          }
+        }
       ]
     },
     {
-      category: 'Skills',
+      category: 'N8N WebSocket Chat',
       items: [
-        { method: 'GET', path: '/skills', description: 'دریافت لیست تمام مهارت‌ها' },
-        { method: 'GET', path: '/skills/{id}', description: 'دریافت جزئیات یک مهارت' }
+        { 
+          method: 'WS', 
+          path: '/ws/chat/{sessionId}', 
+          description: 'اتصال سوکت چت ۳ نفره (۲ AI + کاربر)',
+          params: {
+            connect: { sessionId: 'string', userId: 'number', scenario: 'string' },
+            send: { type: 'user_message', content: 'string', timestamp: 'datetime' },
+            receive: { type: 'ai1_message | ai2_message', content: 'string', character: 'string', timestamp: 'datetime' }
+          }
+        },
+        { 
+          method: 'POST', 
+          path: '/chat/start-session', 
+          description: 'شروع جلسه چت جدید',
+          params: {
+            body: { userId: 'number', scenario: 'string' },
+            response: { sessionId: 'string', characters: 'Array<Character>', websocketUrl: 'string' }
+          }
+        }
       ]
     },
     {
-      category: 'Assessments',
+      category: 'Scenarios & Characters',
       items: [
-        { method: 'POST', path: '/assessments/start', description: 'شروع ارزیابی جدید' },
-        { method: 'POST', path: '/assessments/{id}/chat', description: 'ارسال پیام چت' },
-        { method: 'GET', path: '/assessments/{id}/messages', description: 'دریافت پیام‌های چت' },
-        { method: 'PUT', path: '/assessments/{id}/complete', description: 'تکمیل ارزیابی' }
+        { 
+          method: 'GET', 
+          path: '/scenarios', 
+          description: 'دریافت لیست سناریوها',
+          params: {
+            response: { scenarios: 'Array<{id, name, description, characters: Array<Character>}>' }
+          }
+        },
+        { 
+          method: 'GET', 
+          path: '/characters', 
+          description: 'دریافت لیست کاراکترهای AI',
+          params: {
+            response: { characters: 'Array<{id, name, personality, avatar, voice_settings}>' }
+          }
+        }
       ]
     },
     {
-      category: 'Results',
+      category: 'Results & Analytics',
       items: [
-        { method: 'GET', path: '/results/assessment/{assessmentId}', description: 'نتایج یک ارزیابی' },
-        { method: 'GET', path: '/results/user/{userId}', description: 'تمام نتایج کاربر' }
+        { 
+          method: 'GET', 
+          path: '/results/session/{sessionId}', 
+          description: 'نتایج جلسه چت',
+          params: {
+            response: { analysis: 'object', score: 'number', insights: 'Array<string>', recommendations: 'Array<string>' }
+          }
+        },
+        { 
+          method: 'GET', 
+          path: '/analytics/user/{userId}', 
+          description: 'آنالیز کلی کاربر',
+          params: {
+            response: { sessions: 'Array<Session>', progress: 'object', strengths: 'Array<string>', areas_for_improvement: 'Array<string>' }
+          }
+        }
       ]
     }
   ];
@@ -68,30 +135,52 @@ const APIConfigPanel = () => {
         'FirstName (nvarchar(100))',
         'LastName (nvarchar(100))',
         'Email (nvarchar(255))',
+        'PreferredLanguage (nvarchar(10), Default: fa)',
+        'Avatar (nvarchar(255), nullable)',
         'CreatedAt (datetime)',
         'UpdatedAt (datetime)'
       ]
     },
     {
-      name: 'Skills',
-      description: 'جدول مهارت‌ها',
+      name: 'Scenarios',
+      description: 'جدول سناریوهای چت',
       fields: [
         'Id (int, PK, Auto)',
         'Name (nvarchar(100))',
         'Description (nvarchar(500))',
         'Category (nvarchar(50))',
+        'DifficultyLevel (int)', // 1-5
+        'EstimatedDuration (int)', // minutes
         'IsActive (bit)',
         'CreatedAt (datetime)'
       ]
     },
     {
-      name: 'Assessments',
-      description: 'جدول ارزیابی‌ها',
+      name: 'Characters',
+      description: 'جدول کاراکترهای AI',
+      fields: [
+        'Id (int, PK, Auto)',
+        'Name (nvarchar(100))',
+        'Personality (ntext)',
+        'Role (nvarchar(100))', // mentor, colleague, client, etc.
+        'Avatar (nvarchar(255))',
+        'VoiceSettings (ntext)', // JSON for voice parameters
+        'SystemPrompt (ntext)',
+        'IsActive (bit)',
+        'CreatedAt (datetime)'
+      ]
+    },
+    {
+      name: 'ChatSessions',
+      description: 'جدول جلسات چت',
       fields: [
         'Id (int, PK, Auto)',
         'UserId (int, FK to Users)',
-        'SkillId (int, FK to Skills)',
-        'Status (nvarchar(20))', // started, in_progress, completed
+        'ScenarioId (int, FK to Scenarios)',
+        'SessionKey (nvarchar(36), Unique)', // GUID
+        'Status (nvarchar(20))', // active, completed, abandoned
+        'Character1Id (int, FK to Characters)',
+        'Character2Id (int, FK to Characters)',
         'StartedAt (datetime)',
         'CompletedAt (datetime, nullable)',
         'CreatedAt (datetime)'
@@ -102,25 +191,48 @@ const APIConfigPanel = () => {
       description: 'جدول پیام‌های چت',
       fields: [
         'Id (int, PK, Auto)',
-        'AssessmentId (int, FK to Assessments)',
-        'MessageType (nvarchar(10))', // user, bot
+        'SessionId (int, FK to ChatSessions)',
+        'SenderType (nvarchar(20))', // user, ai1, ai2
+        'SenderId (int, nullable)', // CharacterId if AI
         'Content (ntext)',
+        'MessageOrder (int)',
         'Timestamp (datetime)',
+        'IsVisible (bit, Default: 1)',
         'CreatedAt (datetime)'
       ]
     },
     {
-      name: 'Results',
-      description: 'جدول نتایج ارزیابی',
+      name: 'SessionAnalysis',
+      description: 'جدول تحلیل جلسات',
       fields: [
         'Id (int, PK, Auto)',
-        'AssessmentId (int, FK to Assessments)',
-        'Score (decimal(5,2), nullable)',
-        'Analysis (ntext)',
-        'Strengths (ntext)',
-        'Weaknesses (ntext)',
-        'Recommendations (ntext)',
+        'SessionId (int, FK to ChatSessions)',
+        'OverallScore (decimal(5,2))',
+        'CommunicationScore (decimal(5,2))',
+        'ProblemSolvingScore (decimal(5,2))',
+        'EmotionalIntelligenceScore (decimal(5,2))',
+        'KeyInsights (ntext)', // JSON array
+        'Strengths (ntext)', // JSON array
+        'AreasForImprovement (ntext)', // JSON array
+        'Recommendations (ntext)', // JSON array
+        'DetailedAnalysis (ntext)',
         'CreatedAt (datetime)'
+      ]
+    },
+    {
+      name: 'UserProgress',
+      description: 'جدول پیشرفت کاربران',
+      fields: [
+        'Id (int, PK, Auto)',
+        'UserId (int, FK to Users)',
+        'ScenarioId (int, FK to Scenarios)',
+        'BestScore (decimal(5,2))',
+        'TotalSessions (int)',
+        'CompletedSessions (int)',
+        'AverageScore (decimal(5,2))',
+        'LastSessionAt (datetime)',
+        'CreatedAt (datetime)',
+        'UpdatedAt (datetime)'
       ]
     }
   ];
@@ -197,20 +309,35 @@ const APIConfigPanel = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {category.items.map((endpoint, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-executive-pearl/30 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <Badge variant={endpoint.method === 'GET' ? 'default' : 'secondary'}>
-                              {endpoint.method}
-                            </Badge>
-                            <code className="text-sm text-executive-navy font-mono">
-                              {endpoint.path}
-                            </code>
+                        <div key={index} className="p-4 bg-executive-pearl/30 rounded-lg border border-executive-ash-light/20">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <Badge variant={endpoint.method === 'GET' ? 'default' : endpoint.method === 'WS' ? 'destructive' : 'secondary'}>
+                                {endpoint.method}
+                              </Badge>
+                              <code className="text-sm text-executive-navy font-mono">
+                                {endpoint.path}
+                              </code>
+                            </div>
+                            <span className="text-sm text-executive-ash">
+                              {endpoint.description}
+                            </span>
                           </div>
-                          <span className="text-sm text-executive-ash">
-                            {endpoint.description}
-                          </span>
+                          {endpoint.params && (
+                            <div className="mt-3 p-3 bg-white/50 rounded-lg">
+                              <h5 className="text-xs font-semibold text-executive-charcoal mb-2">پارامترها:</h5>
+                              <div className="space-y-2 text-xs">
+                                {Object.entries(endpoint.params).map(([key, value]) => (
+                                  <div key={key} className="flex gap-2">
+                                    <span className="font-mono text-executive-navy min-w-[80px]">{key}:</span>
+                                    <span className="text-executive-ash font-mono">{JSON.stringify(value, null, 1).replace(/[{}]/g, '').replace(/"/g, '')}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
