@@ -38,13 +38,13 @@ const Assessment = () => {
       return;
     }
 
-    // ===================================================================
-    // آدرس وب‌سوکت شما در اینجا قرار داده شد
-    // ===================================================================
     const N8N_WEBSOCKET_URL = 'wss://cofe-code.com/webhook/moshaver';
 
     ws.current = new WebSocket(N8N_WEBSOCKET_URL);
 
+    // ===================================================================
+    // تغییر اصلی: ارسال پیام "شروع کنیم" پس از اتصال موفق
+    // ===================================================================
     ws.current.onopen = () => {
       console.log('WebSocket connection established');
       setIsConnected(true);
@@ -55,8 +55,7 @@ const Assessment = () => {
       if (ws.current) {
         ws.current.send(JSON.stringify({
           type: 'start_conversation',
-          userId: user?.id,
-          skillId: selectedSkillId
+          content: 'شروع کنیم'
         }));
         setIsTyping(true); // نمایش نشانگر تایپ تا زمان دریافت اولین پیام
       }
@@ -65,7 +64,7 @@ const Assessment = () => {
     ws.current.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        setIsTyping(false); // با دریافت اولین پیام، تایپینگ را متوقف کن
+        setIsTyping(false); 
 
         if (data.analysis) {
           toast.info('ارزیابی تکمیل شد! در حال انتقال به صفحه نتایج...');
