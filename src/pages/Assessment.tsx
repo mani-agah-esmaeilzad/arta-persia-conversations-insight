@@ -1,3 +1,5 @@
+// src/pages/Assessment.tsx
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -39,9 +41,9 @@ const Assessment = () => {
     }
 
     // ===================================================================
-    // آدرس وب‌سوکت N8N خود را در اینجا قرار دهید
+    // آدرس وب‌سوکت N8N خود را که از نود Webhook دریافت می‌کنید، اینجا قرار دهید
     // ===================================================================
-    const N8N_WEBSOCKET_URL = 'https://cofe-code.com/webhook/moshaver';
+    const N8N_WEBSOCKET_URL = 'ws://YOUR_N8N_INSTANCE_URL/webhook/YOUR_SOCKET_PATH';
 
     ws.current = new WebSocket(N8N_WEBSOCKET_URL);
 
@@ -56,16 +58,13 @@ const Assessment = () => {
       try {
         const data = JSON.parse(event.data);
 
-        // اگر پیام از نوع تحلیل نهایی بود، به صفحه نتایج برو
         if (data.analysis) {
-          toast.info('ارزیابی تکمیل شد! در حال انتقال به صفحه نتایج...');
-          navigate('/results', { state: { analysis: data.analysis } });
-          return;
+            toast.info('ارزیابی تکمیل شد! در حال انتقال به صفحه نتایج...');
+            navigate('/results', { state: { analysis: data.analysis } });
+            return;
         }
 
-        // اگر پیام از نوع نوبت AI بود و حاوی آرایه پیام‌ها بود
         if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
-          // پیام‌ها را با کمی تاخیر نمایش می‌دهیم تا طبیعی‌تر به نظر برسد
           data.messages.forEach((msg: any, index: number) => {
             setTimeout(() => {
               const aiMessage: LocalChatMessage = {
@@ -75,11 +74,10 @@ const Assessment = () => {
                 character: msg.character,
               };
               setMessages((prev) => [...prev, aiMessage]);
-            }, index * 1500); // 1.5 ثانیه تاخیر بین هر پیام
+            }, index * 1500); // 1.5 ثانیه تاخیر بین پیام‌ها
           });
         }
         
-        // پس از نمایش آخرین پیام، نشانگر تایپ را غیرفعال کن
         setTimeout(() => {
             setIsTyping(false);
         }, data.messages.length * 1500);
