@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Send, User, Bot, MessageCircle, Shield } from 'lucide-react';
+import { ArrowLeft, Send, Bot, MessageCircle, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { assessmentApi, ChatMessage } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import ChatCharacter from '@/components/ChatCharacter';
 
+// ساختار پیام‌های محلی در استیت کامپوننت
 interface LocalChatMessage {
   type: 'user' | 'ai1' | 'ai2';
   content: string;
@@ -17,107 +17,101 @@ interface LocalChatMessage {
 
 const Assessment = () => {
   const navigate = useNavigate();
-  const { user, selectedSkillId, currentAssessmentId, setCurrentAssessmentId } = useAuth();
+  const { user, selectedSkillId } = useAuth();
   const [messages, setMessages] = useState<LocalChatMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const ws = useRef<WebSocket | null>(null);
 
+  // اسکرول به آخرین پیام
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // مدیریت اتصال وب‌سوکت
   useEffect(() => {
     if (!user || !selectedSkillId) {
       navigate('/');
       return;
     }
-    
-    const initializeAssessment = async () => {
+
+    // ===================================================================
+    // آدرس وب‌سوکت N8N خود را در اینجا قرار دهید
+    // ===================================================================
+    const N8N_WEBSOCKET_URL = 'ws://YOUR_N8N_INSTANCE_URL/webhook/YOUR_SOCKET_PATH';
+
+    ws.current = new WebSocket(N8N_WEBSOCKET_URL);
+
+    ws.current.onopen = () => {
+      console.log('WebSocket connection established');
+      setIsConnected(true);
+      setLoading(false);
+      toast.success('اتصال برقرار شد. منتظر پیام اولیه باشید.');
+    };
+
+    ws.current.onmessage = (event) => {
       try {
-        // شبیه‌سازی شروع ارزیابی
-        const mockAssessmentId = Math.random().toString(36).substr(2, 9);
-        setCurrentAssessmentId(parseInt(mockAssessmentId, 36));
+        const data = JSON.parse(event.data);
+
+        // اگر پیام از نوع تحلیل نهایی بود، به صفحه نتایج برو
+        if (data.analysis) {
+          toast.info('ارزیابی تکمیل شد! در حال انتقال به صفحه نتایج...');
+          navigate('/results', { state: { analysis: data.analysis } });
+          return;
+        }
+
+        // اگر پیام از نوع نوبت AI بود و حاوی آرایه پیام‌ها بود
+        if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
+          // پیام‌ها را با کمی تاخیر نمایش می‌دهیم تا طبیعی‌تر به نظر برسد
+          data.messages.forEach((msg: any, index: number) => {
+            setTimeout(() => {
+              const aiMessage: LocalChatMessage = {
+                type: msg.character.includes('سارا') ? 'ai1' : 'ai2',
+                content: msg.content,
+                timestamp: new Date(),
+                character: msg.character,
+              };
+              setMessages((prev) => [...prev, aiMessage]);
+            }, index * 1500); // 1.5 ثانیه تاخیر بین هر پیام
+          });
+        }
         
-        // پیام‌های خوش‌آمدگویی از دو کاراکتر AI
-        const welcomeMessages: LocalChatMessage[] = [
-          {
-            type: 'ai1',
-            content: 'سلام! من سارا هستم، مربی و مشاور شما در این جلسه. خوشحالم که اینجا هستید! 😊',
-            timestamp: new Date(),
-            character: 'سارا - مربی'
-          },
-          {
-            type: 'ai2',
-            content: 'و من علی هستم، متخصص تحلیل رفتار. در این جلسه با هم یک سناریوی واقعی از محیط کار را تجربه خواهیم کرد. آماده‌اید؟',
-            timestamp: new Date(Date.now() + 2000),
-            character: 'علی - تحلیلگر'
-          }
-        ];
-        
-        setMessages(welcomeMessages);
-        setIsConnected(true);
+        // پس از نمایش آخرین پیام، نشانگر تایپ را غیرفعال کن
+        setTimeout(() => {
+            setIsTyping(false);
+        }, data.messages.length * 1500);
+
       } catch (error) {
-        console.error('خطا در شروع ارزیابی:', error);
-        toast.error('خطا در شروع ارزیابی');
-      } finally {
-        setLoading(false);
+        console.error("Error parsing WebSocket message:", error);
+        toast.error("پیام دریافتی از سرور معتبر نبود.");
+        setIsTyping(false);
       }
     };
 
-    initializeAssessment();
-  }, [user, selectedSkillId]);
+    ws.current.onclose = () => {
+      console.log('WebSocket connection closed');
+      setIsConnected(false);
+      if (messages.length > 0) {
+        toast.error('ارتباط با سرور قطع شد.');
+      }
+    };
 
-  const sendMessage = async (message: string): Promise<any> => {
-    try {
-      // شبیه‌سازی ارسال پیام به API
-      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
-      
-      // پاسخ‌های دو کاراکتر AI
-      const ai1Responses = [
-        'عالی! من فکر می‌کنم این نشان‌دهنده توانایی تحلیلی قوی شماست. علی، نظر شما چیست؟',
-        'بسیار جالب! این رویکرد شما واقعاً حرفه‌ای است. ',
-        'احساس می‌کنم شما در تصمیم‌گیری مهارت خوبی دارید.',
-        'از پاسخ‌تان متوجه شدم که در کار تیمی موثر هستید.'
-      ];
-      
-      const ai2Responses = [
-        'کاملاً موافقم سارا. این رفتار نشان‌دهنده بلوغ عاطفی بالایی است.',
-        'نکته جالبی که علی مطرح کرد - چطور با استرس کار می‌کنید؟',
-        'بر اساس آنچه گفتید، به نظر رسید شما در مدیریت تعارض مهارت دارید.',
-        'سارا درست می‌گوید. حالا بگویید در شرایط بحرانی چگونه رفتار می‌کنید؟'
-      ];
-      
-      const messageCount = messages.length;
-      const shouldUseAI1 = messageCount % 2 === 1;
-      const responseArray = shouldUseAI1 ? ai1Responses : ai2Responses;
-      const character = shouldUseAI1 ? 'سارا - مربی' : 'علی - تحلیلگر';
-      const aiType = shouldUseAI1 ? 'ai1' : 'ai2';
-      
-      const randomResponse = responseArray[Math.floor(Math.random() * responseArray.length)];
-      
-      return { 
-        response: randomResponse,
-        character,
-        aiType,
-        assessmentComplete: messages.length >= 12, // بعد از ۱۲ پیام، ارزیابی تمام شود
-        analysis: messages.length >= 12 ? {
-          score: 85,
-          strengths: ['ارتباط مؤثر', 'تفکر تحلیلی', 'کار تیمی'],
-          weaknesses: ['مدیریت زمان', 'ارائه عمومی'],
-          recommendations: ['شرکت در دوره‌های تخصصی ارائه', 'تمرین تکنیک‌های مدیریت زمان']
-        } : null
-      };
-    } catch (error) {
-      console.error('خطا در ارسال پیام:', error);
-      return { response: 'خطا در ارتباط با سرور. لطفاً اتصال اینترنت خود را بررسی کنید.' };
-    }
-  };
+    ws.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      toast.error('خطا در ارتباط با سرور.');
+      setLoading(false);
+    };
+
+    return () => {
+      ws.current?.close();
+    };
+  }, [user, selectedSkillId, navigate]);
 
   const handleSendMessage = async () => {
-    if (!currentMessage.trim() || isTyping) return;
+    if (!currentMessage.trim() || isTyping || !ws.current || ws.current.readyState !== WebSocket.OPEN) return;
 
     const userMessage: LocalChatMessage = {
       type: 'user',
@@ -126,28 +120,14 @@ const Assessment = () => {
     };
     
     setMessages(prev => [...prev, userMessage]);
-    const messageToSend = currentMessage;
+    
+    ws.current.send(JSON.stringify({
+      type: 'user_message',
+      content: currentMessage
+    }));
+    
     setCurrentMessage('');
     setIsTyping(true);
-
-    const data = await sendMessage(messageToSend);
-
-    // اگر دیتا ساختار گزارش نهایی را داشت، به صفحه نتایج برو
-    if (data.assessmentComplete && data.analysis) {
-      navigate('/results', { state: { analysis: data.analysis } });
-      return;
-    }
-
-    // اگر پیام عادی بود، آن را به لیست پیام‌ها اضافه کن
-    const aiMessage: LocalChatMessage = {
-      type: data.aiType || 'ai1',
-      content: data.response || 'متأسفانه پاسخی دریافت نشد. لطفاً دوباره تلاش کنید.',
-      timestamp: new Date(),
-      character: data.character
-    };
-    
-    setMessages(prev => [...prev, aiMessage]);
-    setIsTyping(false);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -157,7 +137,7 @@ const Assessment = () => {
     }
   };
 
-  if (!isConnected && messages.length === 0) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-executive-pearl via-white to-executive-silver/30 flex items-center justify-center">
         <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-12 shadow-luxury border border-white/20 text-center max-w-md">
@@ -196,11 +176,11 @@ const Assessment = () => {
                 <h1 className="text-xl font-bold text-executive-charcoal">جلسه تعاملی سه‌نفره</h1>
                 <div className="flex items-center gap-4 text-sm">
                   <div className="flex items-center gap-2 text-blue-600">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-blue-500 animate-pulse' : 'bg-gray-400'}`}></div>
                     سارا (مربی)
                   </div>
                   <div className="flex items-center gap-2 text-green-600">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
                     علی (تحلیلگر)
                   </div>
                 </div>
@@ -234,7 +214,6 @@ const Assessment = () => {
                     ? 'bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50 rounded-bl-lg'
                     : 'bg-gradient-to-br from-green-50 to-green-100/50 border border-green-200/50 rounded-bl-lg'
                 }`}>
-                  {/* Speech bubble tail */}
                   <div className={`absolute bottom-4 w-4 h-4 transform rotate-45 ${
                     message.type === 'user' 
                       ? 'right-[-8px] bg-gradient-to-br from-executive-gold/10 to-executive-gold-light/20 border-r border-b border-executive-gold/20'
@@ -265,7 +244,6 @@ const Assessment = () => {
             </div>
           ))}
 
-          {/* Typing Indicator */}
           {isTyping && (
             <div className="flex justify-start items-end gap-6 mb-8">
               <div className="flex items-end gap-4">
@@ -298,13 +276,13 @@ const Assessment = () => {
               onKeyDown={handleKeyPress}
               placeholder="پاسخ خود را اینجا بنویسید..."
               className="min-h-[60px] max-h-[150px] text-base p-6 rounded-2xl border-2 border-executive-ash-light/50 focus:border-executive-navy resize-none bg-white/80 backdrop-blur-sm shadow-subtle transition-all duration-300"
-              disabled={isTyping}
+              disabled={isTyping || !isConnected}
             />
           </div>
           
           <Button
             onClick={handleSendMessage}
-            disabled={!currentMessage.trim() || isTyping}
+            disabled={!currentMessage.trim() || isTyping || !isConnected}
             className="w-14 h-14 bg-gradient-to-br from-executive-navy to-executive-navy-light hover:from-executive-navy-dark hover:to-executive-navy rounded-2xl p-0 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
           >
             <Send className="w-6 h-6 text-white" />
