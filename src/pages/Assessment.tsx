@@ -1,5 +1,3 @@
-// src/pages/Assessment.tsx
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -41,9 +39,9 @@ const Assessment = () => {
     }
 
     // ===================================================================
-    // آدرس وب‌سوکت N8N خود را که از نود Webhook دریافت می‌کنید، اینجا قرار دهید
+    // آدرس وب‌سوکت امن N8N خود را با wss:// در اینجا قرار دهید
     // ===================================================================
-    const N8N_WEBSOCKET_URL = 'ws://https://cofe-code.com/webhook/moshaver';
+    const N8N_WEBSOCKET_URL = 'wss://cofe-code.com/webhook/moshaver'; // <-- **تغییر اصلی اینجاست**
 
     ws.current = new WebSocket(N8N_WEBSOCKET_URL);
 
@@ -51,7 +49,7 @@ const Assessment = () => {
       console.log('WebSocket connection established');
       setIsConnected(true);
       setLoading(false);
-      toast.success('اتصال برقرار شد. منتظر پیام اولیه باشید.');
+      toast.success('اتصال برقرار شد.');
     };
 
     ws.current.onmessage = (event) => {
@@ -59,22 +57,22 @@ const Assessment = () => {
         const data = JSON.parse(event.data);
 
         if (data.analysis) {
-            toast.info('ارزیابی تکمیل شد! در حال انتقال به صفحه نتایج...');
-            navigate('/results', { state: { analysis: data.analysis } });
-            return;
+          toast.info('ارزیابی تکمیل شد! در حال انتقال به صفحه نتایج...');
+          navigate('/results', { state: { analysis: data.analysis } });
+          return;
         }
 
         if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
           data.messages.forEach((msg: any, index: number) => {
             setTimeout(() => {
               const aiMessage: LocalChatMessage = {
-                type: msg.character.includes('سارا') ? 'ai1' : 'ai2',
+                type: msg.character.includes('فرهاد') ? 'ai1' : 'ai2',
                 content: msg.content,
                 timestamp: new Date(),
                 character: msg.character,
               };
               setMessages((prev) => [...prev, aiMessage]);
-            }, index * 1500); // 1.5 ثانیه تاخیر بین پیام‌ها
+            }, index * 1500);
           });
         }
         
@@ -142,8 +140,8 @@ const Assessment = () => {
           <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-executive-navy to-executive-navy-light rounded-2xl flex items-center justify-center animate-pulse shadow-lg">
             <MessageCircle className="w-10 h-10 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-executive-charcoal mb-4">در حال راه‌اندازی سیستم</h2>
-          <p className="text-executive-ash">لطفاً کمی صبر کنید تا ارزیابی آماده شود</p>
+          <h2 className="text-2xl font-bold text-executive-charcoal mb-4">در حال اتصال به سرور...</h2>
+          <p className="text-executive-ash">لطفاً کمی صبر کنید</p>
           <div className="mt-6 flex justify-center space-x-1">
             <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
             <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
@@ -175,11 +173,11 @@ const Assessment = () => {
                 <div className="flex items-center gap-4 text-sm">
                   <div className="flex items-center gap-2 text-blue-600">
                     <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-blue-500 animate-pulse' : 'bg-gray-400'}`}></div>
-                    سارا (مربی)
+                    فرهاد (طراح)
                   </div>
                   <div className="flex items-center gap-2 text-green-600">
                   <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
-                    علی (تحلیلگر)
+                    مریم (معمار)
                   </div>
                 </div>
               </div>
