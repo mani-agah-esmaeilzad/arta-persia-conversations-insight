@@ -32,10 +32,7 @@ const Assessment = () => {
 
   // شروع خودکار ارزیابی با درخواست HTTP
   useEffect(() => {
-    console.log('COMPONENT MOUNTED - useEffect started.'); // لاگ شماره ۱
-
     if (!user) {
-      console.error('USER NOT FOUND - Navigating away.'); // لاگ شماره ۲
       navigate('/');
       return;
     }
@@ -50,18 +47,13 @@ const Assessment = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: "شروع کنیم" })
         });
-        
-        console.log('FETCH RESPONSE RECEIVED - Status:', response.status); // لاگ شماره ۳
 
         if (!response.ok) {
-          throw new Error(`Network response was not ok, status: ${response.status}`);
+          throw new Error('Network response was not ok');
         }
 
         const responseText = await response.text();
-        console.log('RESPONSE TEXT:', responseText); // لاگ شماره ۴
-        
         if (!responseText.trim()) {
-          console.warn('Response text is empty.');
           setLoading(false);
           setIsConnected(true);
           return;
@@ -70,9 +62,8 @@ const Assessment = () => {
         let data;
         try {
           data = JSON.parse(responseText);
-          console.log('✅ JSON PARSED SUCCESSFULLY:', data); // لاگ شماره ۵
         } catch (parseError) {
-          console.error('❌ JSON PARSE FAILED:', parseError);
+          console.error('JSON parse error:', parseError);
           setLoading(false);
           setIsConnected(true);
           return;
@@ -81,18 +72,14 @@ const Assessment = () => {
         setLoading(false);
         setIsConnected(true);
 
-        // ✅ **کد اصلاح‌شده و قابل اطمینان:** پردازش پیام‌ها به صورت متوالی
+        // ✅ کد اصلاح‌شده برای پردازش پیام‌ها به صورت متوالی
         if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
-          console.log('✅ DATA IS VALID - Starting to process messages...'); // لاگ شماره ۶
-          
           for (const msg of data.messages) {
-            console.log('INSIDE LOOP - Processing message:', msg.character); // لاگ شماره ۷
+            await new Promise(resolve => setTimeout(resolve, 1500)); // تاخیر بین پیام‌ها
 
-            await new Promise(resolve => setTimeout(resolve, 1500)); 
-
-            let messageType: 'ai1' | 'ai2' = 'ai1';
-            // اینجا می‌توانید منطق تشخیص کاراکتر را بر اساس نام تغییر دهید
-            if (msg.character.includes('رضا')) { 
+            // منطق برای تشخیص نوع کاراکتر
+            let messageType: 'ai1' | 'ai2' = 'ai1'; // پیش‌فرض
+            if (msg.character.includes('رضا')) { // یا هر نام دیگری برای کاراکتر دوم
               messageType = 'ai2';
             }
             
@@ -103,20 +90,12 @@ const Assessment = () => {
               character: msg.character,
             };
 
-            console.log('✅ CREATED AI MESSAGE - About to set state:', aiMessage); // لاگ شماره ۸
-            
-            setMessages((prev) => {
-                console.log('INSIDE setMessages - Previous state length:', prev.length); // لاگ شماره ۹
-                return [...prev, aiMessage];
-            });
+            setMessages((prev) => [...prev, aiMessage]);
           }
-           console.log('LOOP FINISHED.'); // لاگ شماره ۱۰
-        } else {
-            console.error('❌ DATA FORMAT IS WRONG:', data); // لاگ شماره ۱۱
         }
 
       } catch (error) {
-        console.error("❌ CRITICAL ERROR in startAssessment:", error); // لاگ شماره ۱۲
+        console.error("Error starting assessment:", error);
         toast.error("خطا در شروع ارزیابی. لطفاً دوباره تلاش کنید.");
         setLoading(false);
         navigate('/');
@@ -124,14 +103,7 @@ const Assessment = () => {
     };
 
     startAssessment();
-
-    // این بخش برای بررسی unmount شدن کامپوننت است
-    return () => {
-        console.warn('COMPONENT UNMOUNTED - useEffect cleanup function ran.'); // لاگ شماره ۱۳
-    }
-
   }, [user, navigate]);
-
 
   // ارسال پیام کاربر به n8n
   const sendMessageToN8N = async (message: string) => {
@@ -167,13 +139,13 @@ const Assessment = () => {
         return;
       }
 
-      // ✅ **کد اصلاح‌شده و قابل اطمینان:** پردازش پیام‌های جدید AI
+      // ✅ کد اصلاح‌شده برای پردازش پیام‌های جدید AI
       if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
         for (const msg of data.messages) {
           await new Promise(resolve => setTimeout(resolve, 1500));
 
           let messageType: 'ai1' | 'ai2' = 'ai1';
-          if (msg.character.includes('رضا')) { // یا هر نام دیگری برای کاراکتر دوم
+          if (msg.character.includes('رضا')) {
             messageType = 'ai2';
           }
           
