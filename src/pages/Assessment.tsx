@@ -239,91 +239,91 @@ const Assessment = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-executive-pearl via-white to-executive-silver/20">
       {/* Header */}
-      <header className="bg-white/95 backdrop-blur-xl border-b border-executive-ash-light/30 p-8 sticky top-0 z-50 shadow-subtle">
-        <div className="flex items-center justify-between max-w-6xl mx-auto">
-          <div className="flex items-center gap-6">
+      <header className="bg-white/95 backdrop-blur-xl border-b border-executive-ash-light/30 p-3 sticky top-0 z-50 shadow-subtle">
+        <div className="flex items-center justify-between max-w-full mx-auto">
+          <div className="flex items-center gap-3">
             <button 
               onClick={() => navigate('/')} 
-              className="w-14 h-14 bg-executive-ash-light/50 rounded-2xl flex items-center justify-center hover:bg-executive-navy/10 transition-all duration-300 group shadow-lg"
+              className="w-8 h-8 bg-executive-ash-light/50 rounded-lg flex items-center justify-center hover:bg-executive-navy/10 transition-all duration-300 group"
             >
-              <ArrowLeft className="w-7 h-7 text-executive-ash group-hover:text-executive-navy" />
+              <ArrowLeft className="w-4 h-4 text-executive-ash group-hover:text-executive-navy" />
             </button>
-            <div className="flex items-center gap-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-executive-navy to-executive-navy-light rounded-3xl flex items-center justify-center shadow-2xl">
-                <Users className="w-8 h-8 text-white" />
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-executive-navy to-executive-navy-light rounded-xl flex items-center justify-center">
+                <Users className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-executive-charcoal mb-2">جلسه تعاملی سه‌نفره</h1>
-                <div className="flex items-center gap-6 text-base">
+                <h1 className="text-sm font-bold text-executive-charcoal">جلسه تعاملی</h1>
+                <div className="flex items-center gap-2 text-xs">
                   {aiCharacters.map((char, i) => (
-                    <div key={i} className={`flex items-center gap-3 ${i === 0 ? 'text-blue-600' : 'text-green-600'}`}>
-                      <div className={`w-3 h-3 rounded-full ${isConnected ? (i === 0 ? 'bg-blue-500' : 'bg-green-500') : 'bg-gray-400'} animate-pulse shadow-lg`} />
-                      <span className="font-semibold">{char}</span>
+                    <div key={i} className={`flex items-center gap-1 ${i === 0 ? 'text-blue-600' : 'text-green-600'}`}>
+                      <div className={`w-2 h-2 rounded-full ${isConnected ? (i === 0 ? 'bg-blue-500' : 'bg-green-500') : 'bg-gray-400'} animate-pulse`} />
+                      <span className="font-medium">{char}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-4 bg-executive-gold-light/20 px-6 py-3 rounded-2xl border border-executive-gold/20 shadow-lg">
-            <Shield className="w-6 h-6 text-executive-gold" />
-            <span className="text-base font-bold text-executive-charcoal">ارزیابی امن</span>
+          <div className="flex items-center gap-2 bg-executive-gold-light/20 px-3 py-1 rounded-lg border border-executive-gold/20">
+            <Shield className="w-3 h-3 text-executive-gold" />
+            <span className="text-xs font-bold text-executive-charcoal">امن</span>
           </div>
         </div>
       </header>
 
       {/* Chat Messages */}
-      <main className="flex-1 overflow-y-auto p-8">
-        <div className="max-w-5xl mx-auto space-y-8">
+      <main className="flex-1 overflow-y-auto p-3">
+        <div className="max-w-full mx-auto space-y-3">
           {messages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} items-start gap-8 mb-12`}>
-              <div className={`flex items-start gap-8 max-w-[85%] ${msg.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                <div className="flex-shrink-0 mt-2">
-                  <ChatCharacter 
-                    type={msg.type === 'user' ? 'user' : 'ai'} 
-                    isSpeaking={i === messages.length - 1 && msg.type !== 'user'} 
-                  />
-                </div>
-                <div className={`rounded-3xl p-8 shadow-luxury backdrop-blur-sm relative transform transition-all duration-300 hover:scale-[1.02] ${
-                  msg.type === 'user'
-                    ? 'bg-gradient-to-br from-executive-gold/15 to-executive-gold-light/25 border-2 border-executive-gold/30 rounded-br-xl'
-                    : msg.type === 'ai1'
-                    ? 'bg-gradient-to-br from-blue-50 to-blue-100/60 border-2 border-blue-200/60 rounded-bl-xl'
-                    : 'bg-gradient-to-br from-green-50 to-green-100/60 border-2 border-green-200/60 rounded-bl-xl'
-                }`}>
+            <div key={i} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'} mb-4`}>
+              {/* Character Avatar - Above Message */}
+              {msg.type !== 'user' && (
+                <div className="flex items-center gap-2 mb-1 px-2">
+                  <div className="w-6 h-6 flex-shrink-0">
+                    <ChatCharacter 
+                      type="ai" 
+                      isSpeaking={i === messages.length - 1} 
+                    />
+                  </div>
                   {msg.character && (
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-3 h-3 rounded-full ${
-                        msg.type === 'ai1' ? 'bg-blue-500' : 'bg-green-500'
-                      } animate-pulse shadow-lg`} />
-                      <span className="text-sm font-bold text-executive-charcoal bg-white/70 px-3 py-1 rounded-full">
-                        {msg.character}
-                      </span>
-                    </div>
+                    <span className="text-xs font-bold text-executive-charcoal bg-white/70 px-2 py-1 rounded-full">
+                      {msg.character}
+                    </span>
                   )}
-                  <p className="leading-relaxed whitespace-pre-line text-executive-charcoal text-xl font-medium">
-                    {msg.content}
-                  </p>
-                  <p className="text-sm mt-4 text-executive-ash/80 font-medium">
-                    {msg.timestamp.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}
-                  </p>
                 </div>
+              )}
+              
+              {/* Message Bubble */}
+              <div className={`max-w-[80%] rounded-2xl p-3 shadow-md backdrop-blur-sm ${
+                msg.type === 'user'
+                  ? 'bg-gradient-to-br from-executive-gold/15 to-executive-gold-light/25 border border-executive-gold/30 rounded-br-md'
+                  : msg.type === 'ai1'
+                  ? 'bg-gradient-to-br from-blue-50 to-blue-100/60 border border-blue-200/60 rounded-bl-md'
+                  : 'bg-gradient-to-br from-green-50 to-green-100/60 border border-green-200/60 rounded-bl-md'
+              }`}>
+                <p className="text-sm leading-relaxed whitespace-pre-line text-executive-charcoal">
+                  {msg.content}
+                </p>
+                <p className="text-xs mt-2 text-executive-ash/80">
+                  {msg.timestamp.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}
+                </p>
               </div>
             </div>
           ))}
           
           {isTyping && (
-            <div className="flex justify-start items-start gap-8 mb-12">
-              <div className="flex items-start gap-8">
-                <div className="flex-shrink-0 mt-2">
+            <div className="flex flex-col items-start mb-4">
+              <div className="flex items-center gap-2 mb-1 px-2">
+                <div className="w-6 h-6 flex-shrink-0">
                   <ChatCharacter type="ai" isTyping={true} isSpeaking={false} />
                 </div>
-                <div className="bg-white/95 border-2 border-executive-ash-light/40 rounded-3xl rounded-bl-xl p-8 shadow-luxury backdrop-blur-sm relative transform animate-pulse">
-                  <div className="flex space-x-2">
-                    <div className="w-4 h-4 bg-executive-navy rounded-full animate-bounce" />
-                    <div className="w-4 h-4 bg-executive-navy rounded-full animate-bounce delay-150" />
-                    <div className="w-4 h-4 bg-executive-navy rounded-full animate-bounce delay-300" />
-                  </div>
+              </div>
+              <div className="bg-white/95 border border-executive-ash-light/40 rounded-2xl rounded-bl-md p-3 shadow-md backdrop-blur-sm animate-pulse">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" />
+                  <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce delay-150" />
+                  <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce delay-300" />
                 </div>
               </div>
             </div>
@@ -333,28 +333,28 @@ const Assessment = () => {
       </main>
 
       {/* Footer */}
-      <footer className="p-8 bg-white/95 backdrop-blur-xl border-t border-executive-ash-light/30">
-        <div className="max-w-5xl mx-auto">
-          <div className="flex gap-6 items-end mb-6">
+      <footer className="p-3 bg-white/95 backdrop-blur-xl border-t border-executive-ash-light/30">
+        <div className="max-w-full mx-auto">
+          <div className="flex gap-2 items-end mb-3">
             <Textarea
               value={currentMessage}
               onChange={(e) => setCurrentMessage(e.target.value)}
               onKeyDown={handleKeyPress}
               placeholder="پاسخ خود را بنویسید..."
-              className="flex-1 min-h-[80px] max-h-[200px] text-lg p-8 rounded-3xl border-2 border-executive-ash-light/50 focus:border-executive-navy resize-none bg-white/90 backdrop-blur-sm shadow-luxury transition-all duration-300 font-medium"
+              className="flex-1 min-h-[60px] max-h-[120px] text-sm p-3 rounded-2xl border border-executive-ash-light/50 focus:border-executive-navy resize-none bg-white/90 backdrop-blur-sm shadow-md transition-all duration-300"
               disabled={isTyping || !isConnected}
             />
             <Button 
               onClick={handleSendMessage} 
               disabled={!currentMessage.trim() || isTyping || !isConnected} 
-              className="w-16 h-16 bg-gradient-to-br from-executive-navy to-executive-navy-light hover:from-executive-navy-dark hover:to-executive-navy rounded-3xl p-0 shadow-2xl transition-all duration-300 transform hover:scale-110 disabled:opacity-50 disabled:transform-none"
+              className="w-12 h-12 bg-gradient-to-br from-executive-navy to-executive-navy-light hover:from-executive-navy-dark hover:to-executive-navy rounded-2xl p-0 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
             >
-              <Send className="w-8 h-8 text-white" />
+              <Send className="w-5 h-5 text-white" />
             </Button>
           </div>
           <div className="text-center">
-            <p className="text-base text-executive-ash font-medium bg-executive-ash-light/20 px-6 py-3 rounded-2xl inline-block">
-              💬 این یک جلسه ارزیابی زنده است. پاسخ‌های شما توسط هوش مصنوعی تحلیل می‌شوند
+            <p className="text-xs text-executive-ash bg-executive-ash-light/20 px-3 py-2 rounded-lg inline-block">
+              💬 جلسه ارزیابی زنده
             </p>
           </div>
         </div>
