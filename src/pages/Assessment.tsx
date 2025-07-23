@@ -31,51 +31,38 @@ const Assessment = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // مدیریت اتصال وب‌سوکت
+  // شروع خودکار ارزیابی با درخواست HTTP
   useEffect(() => {
-    if (!user || !selectedSkillId) {
+    if (!user) {
       navigate('/');
       return;
     }
 
-    // آدرس وب‌سوکت امن (wss) شما
-    const N8N_WEBSOCKET_URL = 'wss://cofe-code.com/webhook/moshaver';
-
-    ws.current = new WebSocket(N8N_WEBSOCKET_URL);
-
-    // ارسال پیام "شروع کنیم" پس از اتصال موفق
-    ws.current.onopen = () => {
-      console.log('WebSocket connection established');
-      setIsConnected(true);
-      setLoading(false);
-      toast.success('اتصال برقرار شد. در حال شروع سناریو...');
-
-      if (ws.current) {
-        // ساختار پیام بر اساس چیزی که ورک‌فلو شما انتظار دارد
-        const startMessage = {
-          body: {
-            message: "شروع کنیم"
-          }
-        };
-        ws.current.send(JSON.stringify(startMessage));
-        setIsTyping(true); // نمایش نشانگر تایپ تا زمان دریافت اولین پیام
-      }
-    };
-
-    ws.current.onmessage = (event) => {
+    const startAssessment = async () => {
       try {
-        // ورک‌فلو شما یک JSON با کلید response برمی‌گرداند، پس باید آن را باز کنیم
-        const rawData = JSON.parse(event.data);
-        const data = JSON.parse(rawData.response);
+        setLoading(true);
+        toast.success('در حال شروع سناریو...');
+        
+        // ارسال درخواست HTTP به n8n webhook
+        const response = await fetch('https://cofe-code.com/webhook/moshaver', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: "شروع کنیم"
+          })
+        });
 
-        setIsTyping(false); 
-
-        if (data.analysis) {
-          toast.info('ارزیابی تکمیل شد! در حال انتقال به صفحه نتایج...');
-          navigate('/results', { state: { analysis: data.analysis } });
-          return;
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
         }
 
+        const data = await response.json();
+        setLoading(false);
+        setIsConnected(true);
+
+        // پردازش پیام‌های دریافتی از n8n
         if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
           data.messages.forEach((msg: any, index: number) => {
             setTimeout(() => {
@@ -86,41 +73,72 @@ const Assessment = () => {
                 character: msg.character,
               };
               setMessages((prev) => [...prev, aiMessage]);
-            }, index * 1500);
+            }, index * 2000); // فاصله زمانی بین پیام‌ها
           });
-          
-          setTimeout(() => {
-            setIsTyping(false);
-          }, data.messages.length * 1500);
         }
+
       } catch (error) {
-        console.error("Error parsing WebSocket message:", error);
-        toast.error("پیام دریافتی از سرور معتبر نبود.");
-        setIsTyping(false);
+        console.error("Error starting assessment:", error);
+        toast.error("خطا در شروع ارزیابی. لطفاً دوباره تلاش کنید.");
+        setLoading(false);
+        navigate('/');
       }
     };
 
-    ws.current.onclose = () => {
-      console.log('WebSocket connection closed');
-      setIsConnected(false);
-      if (messages.length > 0) {
-        toast.error('ارتباط با سرور قطع شد.');
+    startAssessment();
+  }, [user, navigate]);
+
+  // ارسال پیام کاربر به n8n
+  const sendMessageToN8N = async (message: string) => {
+    try {
+      const response = await fetch('https://cofe-code.com/webhook/moshaver', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
-    };
 
-    ws.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      toast.error('خطا در ارتباط با سرور.');
-      setLoading(false);
-    };
+      const data = await response.json();
+      setIsTyping(false);
 
-    return () => {
-      ws.current?.close();
-    };
-  }, [user, selectedSkillId, navigate]);
+      // بررسی اتمام ارزیابی
+      if (data.analysis) {
+        toast.info('ارزیابی تکمیل شد! در حال انتقال به صفحه نتایج...');
+        navigate('/results', { state: { analysis: data.analysis } });
+        return;
+      }
+
+      // پردازش پیام‌های جدید AI
+      if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
+        data.messages.forEach((msg: any, index: number) => {
+          setTimeout(() => {
+            const aiMessage: LocalChatMessage = {
+              type: msg.character.includes('فرهاد') ? 'ai1' : 'ai2',
+              content: msg.content,
+              timestamp: new Date(),
+              character: msg.character,
+            };
+            setMessages((prev) => [...prev, aiMessage]);
+          }, index * 2000);
+        });
+      }
+
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("خطا در ارسال پیام. لطفاً دوباره تلاش کنید.");
+      setIsTyping(false);
+    }
+  };
 
   const handleSendMessage = async () => {
-    if (!currentMessage.trim() || isTyping || !ws.current || ws.current.readyState !== WebSocket.OPEN) return;
+    if (!currentMessage.trim() || isTyping || !isConnected) return;
 
     const userMessage: LocalChatMessage = {
       type: 'user',
@@ -129,16 +147,11 @@ const Assessment = () => {
     };
     
     setMessages(prev => [...prev, userMessage]);
-    
-    // ارسال پیام کاربر با ساختاری که ورک‌فلو انتظار دارد
-    ws.current.send(JSON.stringify({
-      body: {
-        message: currentMessage
-      }
-    }));
-    
     setCurrentMessage('');
     setIsTyping(true);
+    
+    // ارسال پیام کاربر به n8n
+    await sendMessageToN8N(currentMessage);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
