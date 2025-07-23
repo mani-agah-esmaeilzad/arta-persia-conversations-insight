@@ -43,7 +43,6 @@ const Assessment = () => {
         setLoading(true);
         toast.success('در حال شروع سناریو...');
         
-        // ارسال درخواست HTTP به n8n webhook
         const response = await fetch('https://cofe-code.com/webhook/moshaver', {
           method: 'POST',
           headers: {
@@ -58,7 +57,6 @@ const Assessment = () => {
           throw new Error('Network response was not ok');
         }
 
-        // بررسی اینکه آیا محتوای JSON دارد یا نه
         const responseText = await response.text();
         console.log('Response from webhook:', responseText);
         
@@ -82,34 +80,25 @@ const Assessment = () => {
         setLoading(false);
         setIsConnected(true);
 
-        // پردازش پیام‌های دریافتی از n8n
-        console.log('Received data:', data);
+        // ✅ **کد اصلاح‌شده:** پردازش پیام‌ها به صورت متوالی
         if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
-          console.log('Processing AI messages:', data.messages);
-          data.messages.forEach((msg: any, index: number) => {
-            console.log(`Processing message ${index}:`, msg);
-            setTimeout(() => {
-              // تشخیص نوع کاراکتر بر اساس نام
-              let messageType: 'ai1' | 'ai2' = 'ai1';
-              if (msg.character.includes('سارا') || msg.character.includes('مریم')) {
-                messageType = 'ai2';
-              }
-              
-              console.log(`Adding message with type ${messageType}:`, msg.character, msg.content);
-              const aiMessage: LocalChatMessage = {
-                type: messageType,
-                content: msg.content,
-                timestamp: new Date(),
-                character: msg.character,
-              };
-              setMessages((prev) => {
-                console.log('Previous messages:', prev);
-                const newMessages = [...prev, aiMessage];
-                console.log('New messages after adding:', newMessages);
-                return newMessages;
-              });
-            }, index * 2000); // فاصله زمانی بین پیام‌ها
-          });
+          for (const msg of data.messages) {
+            await new Promise(resolve => setTimeout(resolve, 1500)); // تاخیر بین پیام‌ها
+
+            let messageType: 'ai1' | 'ai2' = 'ai1';
+            if (msg.character.includes('سارا') || msg.character.includes('مریم')) {
+              messageType = 'ai2';
+            }
+            
+            const aiMessage: LocalChatMessage = {
+              type: messageType,
+              content: msg.content,
+              timestamp: new Date(),
+              character: msg.character,
+            };
+
+            setMessages((prev) => [...prev, aiMessage]);
+          }
         } else {
           console.log('Data does not match expected format:', data);
         }
@@ -142,7 +131,6 @@ const Assessment = () => {
         throw new Error('Network response was not ok');
       }
 
-      // بررسی اینکه آیا محتوای JSON دارد یا نه
       const responseText = await response.text();
       console.log('User message response:', responseText);
       
@@ -161,32 +149,30 @@ const Assessment = () => {
         return;
       }
 
-      // بررسی اتمام ارزیابی
       if (data.analysis) {
         toast.info('ارزیابی تکمیل شد! در حال انتقال به صفحه نتایج...');
         navigate('/results', { state: { analysis: data.analysis } });
         return;
       }
 
-      // پردازش پیام‌های جدید AI
+      // ✅ **کد اصلاح‌شده:** پردازش پیام‌های جدید AI به صورت متوالی
       if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
-        data.messages.forEach((msg: any, index: number) => {
-          setTimeout(() => {
-            // تشخیص نوع کاراکتر بر اساس نام
-            let messageType: 'ai1' | 'ai2' = 'ai1';
-            if (msg.character.includes('سارا') || msg.character.includes('مریم')) {
-              messageType = 'ai2';
-            }
-            
-            const aiMessage: LocalChatMessage = {
-              type: messageType,
-              content: msg.content,
-              timestamp: new Date(),
-              character: msg.character,
-            };
-            setMessages((prev) => [...prev, aiMessage]);
-          }, index * 2000);
-        });
+        for (const msg of data.messages) {
+          await new Promise(resolve => setTimeout(resolve, 1500)); // تاخیر بین پیام‌ها
+
+          let messageType: 'ai1' | 'ai2' = 'ai1';
+          if (msg.character.includes('سارا') || msg.character.includes('مریم')) {
+            messageType = 'ai2';
+          }
+          
+          const aiMessage: LocalChatMessage = {
+            type: messageType,
+            content: msg.content,
+            timestamp: new Date(),
+            character: msg.character,
+          };
+          setMessages((prev) => [...prev, aiMessage]);
+        }
       }
 
     } catch (error) {
@@ -263,7 +249,7 @@ const Assessment = () => {
                     فرهاد (طراح)
                   </div>
                   <div className="flex items-center gap-2 text-green-600">
-                  <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                    <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
                     مریم (معمار)
                   </div>
                 </div>
