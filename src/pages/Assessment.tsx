@@ -2,11 +2,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Send, Bot, MessageCircle, Shield } from 'lucide-react';
+import { ArrowLeft, Send, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import ChatCharacter from '@/components/ChatCharacter';
 
 interface LocalChatMessage {
   type: 'user' | 'ai1' | 'ai2';
@@ -65,6 +64,7 @@ const Assessment = () => {
   }, [user, navigate]);
 
   const handleAiResponse = (data: any) => {
+    console.log('[AI Response Raw]', data);
     if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
       const incomingCharacters = [...new Set(data.messages.map((msg: any) => msg.character))] as string[];
       const [char1, char2] = aiCharacters.length > 0 ? aiCharacters : incomingCharacters.slice(0, 2);
@@ -85,6 +85,7 @@ const Assessment = () => {
           character: msg.character
         };
 
+        console.log(`[AI ${messageType.toUpperCase()}]`, aiMessage);
         tempMessages.push(aiMessage);
       });
 
@@ -142,20 +143,17 @@ const Assessment = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-center text-xl">در حال اتصال...</div>
-    );
+    return <div className="flex items-center justify-center min-h-screen text-xl">در حال اتصال...</div>;
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <header className="p-4 border-b bg-white shadow flex justify-between items-center">
+      <header className="p-4 bg-white shadow flex justify-between items-center border-b">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/')}
-                  className="p-2 rounded bg-gray-100 hover:bg-gray-200">
+          <button onClick={() => navigate('/')} className="p-2 bg-gray-100 rounded hover:bg-gray-200">
             <ArrowLeft />
           </button>
-          <h1 className="text-lg font-bold">جلسه تعاملی سه‌نفره</h1>
+          <h1 className="font-bold text-lg">جلسه تعاملی سه‌نفره</h1>
           {aiCharacters.length > 0 && (
             <div className="text-sm text-gray-500 flex gap-4">
               <span>{aiCharacters[0]}</span>
@@ -168,19 +166,15 @@ const Assessment = () => {
         </div>
       </header>
 
-      <main className="flex-1 p-4 overflow-y-auto">
-        <div className="space-y-4 max-w-3xl mx-auto">
+      <main className="flex-1 overflow-y-auto p-4">
+        <div className="max-w-2xl mx-auto space-y-4">
           {messages.map((msg, i) => (
             <div key={i} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-sm px-4 py-3 rounded-2xl shadow ${
-                msg.type === 'user'
-                  ? 'bg-yellow-100 text-right'
-                  : msg.type === 'ai1'
-                  ? 'bg-blue-100'
-                  : 'bg-green-100'
+              <div className={`max-w-sm p-3 rounded-xl shadow ${
+                msg.type === 'user' ? 'bg-yellow-100' : msg.type === 'ai1' ? 'bg-blue-100' : 'bg-green-100'
               }`}>
                 {msg.character && <div className="text-xs text-gray-600 mb-1">{msg.character}</div>}
-                <div className="whitespace-pre-line text-sm">{msg.content}</div>
+                <div className="whitespace-pre-wrap text-sm">{msg.content}</div>
                 <div className="text-xs text-gray-400 mt-1 text-left">
                   {msg.timestamp.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}
                 </div>
@@ -190,20 +184,19 @@ const Assessment = () => {
 
           {isTyping && (
             <div className="flex justify-start">
-              <div className="px-4 py-3 rounded-2xl shadow bg-white border text-sm flex items-center gap-1">
+              <div className="px-4 py-3 rounded-xl shadow bg-white border text-sm flex items-center gap-1">
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-150" />
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-300" />
               </div>
             </div>
           )}
-
           <div ref={messagesEndRef} />
         </div>
       </main>
 
-      <footer className="p-4 border-t bg-white">
-        <div className="max-w-3xl mx-auto flex gap-2 items-end">
+      <footer className="p-4 bg-white border-t">
+        <div className="max-w-2xl mx-auto flex gap-2 items-end">
           <Textarea
             value={currentMessage}
             onChange={(e) => setCurrentMessage(e.target.value)}
