@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import ChatCharacter from '@/components/ChatCharacter';
 
-// ساختار پیام‌های محلی در استیت کامپوننت
+// ساختار پیام‌های محلی
 interface LocalChatMessage {
   type: 'user' | 'ai1' | 'ai2';
   content: string;
@@ -18,153 +18,46 @@ interface LocalChatMessage {
 const Assessment = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [messages, setMessages] = useState<LocalChatMessage[]>([]);
+  
+  // ✅ مرحله ۳: State مربوط به پیام‌ها با داده‌های ثابت جایگزین شد
+  const [messages, setMessages] = useState<LocalChatMessage[]>([
+    { type: 'ai1', content: 'این یک پیام تستی از علی است.', timestamp: new Date(), character: 'علی - مهندس' },
+    { type: 'ai2', content: 'این یک پیام تستی از رضا است.', timestamp: new Date(), character: 'رضا - هنرمند' }
+  ]);
+
   const [currentMessage, setCurrentMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [isConnected, setIsConnected] = useState(false);
+  
+  // این دو state را هم تغییر می‌دهیم تا صفحه لودینگ نمایش داده نشود
+  const [loading, setLoading] = useState(false);
+  const [isConnected, setIsConnected] = useState(true);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // اسکرول به آخرین پیام
+  // این useEffect فقط برای اسکرول کردن است و باید باقی بماند
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // شروع خودکار ارزیابی با درخواست HTTP
-  useEffect(() => {
-    if (!user) {
-      navigate('/');
-      return;
-    }
-
-    const startAssessment = async () => {
-      try {
-        setLoading(true);
-        toast.success('در حال شروع سناریو...');
-        
-        const response = await fetch('https://cofe-code.com/webhook/moshaver', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: "شروع کنیم" })
-        });
-
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-
-        const responseText = await response.text();
-        if (!responseText.trim()) {
-          setLoading(false);
-          setIsConnected(true);
-          return;
-        }
-
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error('JSON parse error:', parseError);
-          setLoading(false);
-          setIsConnected(true);
-          return;
-        }
-
-        setLoading(false);
-        setIsConnected(true);
-
-        // ✅ کد اصلاح‌شده برای پردازش پیام‌ها به صورت متوالی
-        if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
-          for (const msg of data.messages) {
-            await new Promise(resolve => setTimeout(resolve, 1500)); // تاخیر بین پیام‌ها
-
-            // منطق برای تشخیص نوع کاراکتر
-            let messageType: 'ai1' | 'ai2' = 'ai1'; // پیش‌فرض
-            if (msg.character.includes('رضا')) { // یا هر نام دیگری برای کاراکتر دوم
-              messageType = 'ai2';
-            }
-            
-            const aiMessage: LocalChatMessage = {
-              type: messageType,
-              content: msg.content,
-              timestamp: new Date(),
-              character: msg.character,
-            };
-
-            setMessages((prev) => [...prev, aiMessage]);
-          }
-        }
-
-      } catch (error) {
-        console.error("Error starting assessment:", error);
-        toast.error("خطا در شروع ارزیابی. لطفاً دوباره تلاش کنید.");
-        setLoading(false);
+  /* ✅ مرحله ۲: کل بلاک useEffect که داده‌ها را از سرور می‌گرفت، کامنت شد
+  
+    useEffect(() => {
+      if (!user) {
         navigate('/');
+        return;
       }
-    };
+      const startAssessment = async () => {
+        // ... محتوای قبلی ...
+      };
+      startAssessment();
+    }, [user, navigate]);
+  */
 
-    startAssessment();
-  }, [user, navigate]);
-
-  // ارسال پیام کاربر به n8n
+  // برای جلوگیری از خطا، این تابع را موقتاً به یک نسخه ساده تبدیل می‌کنیم
   const sendMessageToN8N = async (message: string) => {
-    try {
-      const response = await fetch('https://cofe-code.com/webhook/moshaver', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: message })
-      });
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-
-      const responseText = await response.text();
-      setIsTyping(false);
-
-      if (!responseText.trim()) {
-        return;
-      }
-
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('JSON parse error for user message:', parseError);
-        return;
-      }
-      
-      if (data.analysis) {
-        toast.info('ارزیابی تکمیل شد! در حال انتقال به صفحه نتایج...');
-        navigate('/results', { state: { analysis: data.analysis } });
-        return;
-      }
-
-      // ✅ کد اصلاح‌شده برای پردازش پیام‌های جدید AI
-      if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
-        for (const msg of data.messages) {
-          await new Promise(resolve => setTimeout(resolve, 1500));
-
-          let messageType: 'ai1' | 'ai2' = 'ai1';
-          if (msg.character.includes('رضا')) {
-            messageType = 'ai2';
-          }
-          
-          const aiMessage: LocalChatMessage = {
-            type: messageType,
-            content: msg.content,
-            timestamp: new Date(),
-            character: msg.character,
-          };
-
-          setMessages((prev) => [...prev, aiMessage]);
-        }
-      }
-
-    } catch (error) {
-      console.error("Error sending message:", error);
-      toast.error("خطا در ارسال پیام. لطفاً دوباره تلاش کنید.");
-      setIsTyping(false);
-    }
+    console.log("ارسال پیام در حالت تست غیرفعال است:", message);
+    setIsTyping(false);
+    // می‌توانید یک پاسخ فیک هم اینجا شبیه‌سازی کنید
   };
 
   const handleSendMessage = async () => {
@@ -179,7 +72,6 @@ const Assessment = () => {
     setMessages(prev => [...prev, userMessage]);
     const messageToSend = currentMessage;
     setCurrentMessage('');
-    setIsTyping(true);
     
     await sendMessageToN8N(messageToSend);
   };
@@ -191,21 +83,11 @@ const Assessment = () => {
     }
   };
 
+  // چون loading را false کردیم، این بخش دیگر اجرا نمی‌شود
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-executive-pearl via-white to-executive-silver/30 flex items-center justify-center">
-        <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-12 shadow-luxury border border-white/20 text-center max-w-md">
-          <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-executive-navy to-executive-navy-light rounded-2xl flex items-center justify-center animate-pulse shadow-lg">
-            <MessageCircle className="w-10 h-10 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold text-executive-charcoal mb-4">در حال اتصال به سرور...</h2>
-          <p className="text-executive-ash">لطفاً کمی صبر کنید</p>
-          <div className="mt-6 flex justify-center space-x-1">
-            <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-            <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-            <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-          </div>
-        </div>
+        {/* ... محتوای لودینگ ... */}
       </div>
     );
   }
