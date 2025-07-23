@@ -58,7 +58,27 @@ const Assessment = () => {
           throw new Error('Network response was not ok');
         }
 
-        const data = await response.json();
+        // بررسی اینکه آیا محتوای JSON دارد یا نه
+        const responseText = await response.text();
+        console.log('Response from webhook:', responseText);
+        
+        if (!responseText.trim()) {
+          console.log('Empty response, waiting for messages...');
+          setLoading(false);
+          setIsConnected(true);
+          return;
+        }
+
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError);
+          setLoading(false);
+          setIsConnected(true);
+          return;
+        }
+
         setLoading(false);
         setIsConnected(true);
 
@@ -66,8 +86,14 @@ const Assessment = () => {
         if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
           data.messages.forEach((msg: any, index: number) => {
             setTimeout(() => {
+              // تشخیص نوع کاراکتر بر اساس نام
+              let messageType: 'ai1' | 'ai2' = 'ai1';
+              if (msg.character.includes('سارا') || msg.character.includes('مریم')) {
+                messageType = 'ai2';
+              }
+              
               const aiMessage: LocalChatMessage = {
-                type: msg.character.includes('فرهاد') ? 'ai1' : 'ai2',
+                type: messageType,
                 content: msg.content,
                 timestamp: new Date(),
                 character: msg.character,
@@ -105,8 +131,24 @@ const Assessment = () => {
         throw new Error('Network response was not ok');
       }
 
-      const data = await response.json();
+      // بررسی اینکه آیا محتوای JSON دارد یا نه
+      const responseText = await response.text();
+      console.log('User message response:', responseText);
+      
       setIsTyping(false);
+
+      if (!responseText.trim()) {
+        console.log('Empty response for user message');
+        return;
+      }
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('JSON parse error for user message:', parseError);
+        return;
+      }
 
       // بررسی اتمام ارزیابی
       if (data.analysis) {
@@ -119,8 +161,14 @@ const Assessment = () => {
       if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
         data.messages.forEach((msg: any, index: number) => {
           setTimeout(() => {
+            // تشخیص نوع کاراکتر بر اساس نام
+            let messageType: 'ai1' | 'ai2' = 'ai1';
+            if (msg.character.includes('سارا') || msg.character.includes('مریم')) {
+              messageType = 'ai2';
+            }
+            
             const aiMessage: LocalChatMessage = {
-              type: msg.character.includes('فرهاد') ? 'ai1' : 'ai2',
+              type: messageType,
               content: msg.content,
               timestamp: new Date(),
               character: msg.character,
