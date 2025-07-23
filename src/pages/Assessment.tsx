@@ -51,7 +51,13 @@ const Assessment = () => {
         setIsConnected(true);
         if (!responseText.trim()) return;
 
-        const data = JSON.parse(responseText);
+        const parsed = JSON.parse(responseText);
+        const json = parsed.response
+          .replace(/^```json/, '')
+          .replace(/```$/, '')
+          .trim();
+
+        const data = JSON.parse(json);
         handleAiResponse(data);
       } catch (error) {
         toast.error("خطا در شروع ارزیابی. لطفاً دوباره تلاش کنید.");
@@ -114,7 +120,13 @@ const Assessment = () => {
       const responseText = await response.text();
       if (!responseText.trim()) return;
 
-      const data = JSON.parse(responseText);
+      const parsed = JSON.parse(responseText);
+      const json = parsed.response
+        .replace(/^```json/, '')
+        .replace(/```$/, '')
+        .trim();
+
+      const data = JSON.parse(json);
       handleAiResponse(data);
     } catch (error) {
       toast.error("خطا در ارسال پیام. لطفاً دوباره تلاش کنید.");
