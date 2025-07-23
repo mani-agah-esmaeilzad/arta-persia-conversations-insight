@@ -127,6 +127,7 @@ const Assessment = () => {
         .trim();
 
       const data = JSON.parse(json);
+      console.log(data);
       handleAiResponse(data);
     } catch (error) {
       toast.error("خطا در ارسال پیام. لطفاً دوباره تلاش کنید.");
