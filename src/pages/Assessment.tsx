@@ -64,7 +64,7 @@ const Assessment = () => {
   }, [user, navigate]);
 
   const handleAiResponse = (data: any) => {
-    console.log('[AI Response Raw]', data);
+    console.log('[AI Response Raw]', JSON.stringify(data, null, 2));
     if (Array.isArray(data.messages)) {
       const incomingCharacters = [...new Set(data.messages.map((msg: any) => msg.character))] as string[];
       const [char1, char2] = aiCharacters.length > 0 ? aiCharacters : incomingCharacters.slice(0, 2);
