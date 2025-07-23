@@ -83,8 +83,11 @@ const Assessment = () => {
         setIsConnected(true);
 
         // پردازش پیام‌های دریافتی از n8n
+        console.log('Received data:', data);
         if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
+          console.log('Processing AI messages:', data.messages);
           data.messages.forEach((msg: any, index: number) => {
+            console.log(`Processing message ${index}:`, msg);
             setTimeout(() => {
               // تشخیص نوع کاراکتر بر اساس نام
               let messageType: 'ai1' | 'ai2' = 'ai1';
@@ -92,15 +95,23 @@ const Assessment = () => {
                 messageType = 'ai2';
               }
               
+              console.log(`Adding message with type ${messageType}:`, msg.character, msg.content);
               const aiMessage: LocalChatMessage = {
                 type: messageType,
                 content: msg.content,
                 timestamp: new Date(),
                 character: msg.character,
               };
-              setMessages((prev) => [...prev, aiMessage]);
+              setMessages((prev) => {
+                console.log('Previous messages:', prev);
+                const newMessages = [...prev, aiMessage];
+                console.log('New messages after adding:', newMessages);
+                return newMessages;
+              });
             }, index * 2000); // فاصله زمانی بین پیام‌ها
           });
+        } else {
+          console.log('Data does not match expected format:', data);
         }
 
       } catch (error) {
