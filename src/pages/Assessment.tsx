@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useReducer } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Send, Bot, MessageCircle, Shield } from 'lucide-react';
@@ -7,171 +7,174 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import ChatCharacter from '@/components/ChatCharacter';
 
-// ساختار پیام‌های محلی
+// 1. تعریف انواع پیام و ساختار State
 interface LocalChatMessage {
   type: 'user' | 'ai1' | 'ai2';
   content: string;
   timestamp: Date;
   character?: string;
-  id: string; // ✅ یک شناسه منحصر به فرد برای هر پیام اضافه کردیم
+  id: string;
 }
+
+interface ChatState {
+  messages: LocalChatMessage[];
+  isTyping: boolean;
+  loading: boolean;
+  isConnected: boolean;
+  currentMessage: string;
+}
+
+// 2. تعریف Action هایی که می‌توانند State را تغییر دهند
+type ChatAction =
+  | { type: 'START_LOADING' }
+  | { type: 'CONNECTION_COMPLETE' }
+  | { type: 'START_TYPING' }
+  | { type: 'STOP_TYPING' }
+  | { type: 'ADD_MESSAGE'; payload: LocalChatMessage }
+  | { type: 'UPDATE_INPUT'; payload: string };
+
+// 3. Reducer: قلب تپنده مدیریت State
+const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
+  switch (action.type) {
+    case 'START_LOADING':
+      return { ...state, loading: true };
+    case 'CONNECTION_COMPLETE':
+      return { ...state, loading: false, isConnected: true };
+    case 'START_TYPING':
+      return { ...state, isTyping: true };
+    case 'STOP_TYPING':
+      return { ...state, isTyping: false };
+    case 'ADD_MESSAGE':
+      return { ...state, messages: [...state.messages, action.payload] };
+    case 'UPDATE_INPUT':
+      return { ...state, currentMessage: action.payload };
+    default:
+      return state;
+  }
+};
+
+// State اولیه
+const initialState: ChatState = {
+  messages: [],
+  isTyping: false,
+  loading: true,
+  isConnected: false,
+  currentMessage: '',
+};
 
 const Assessment = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [messages, setMessages] = useState<LocalChatMessage[]>([]);
-  const [currentMessage, setCurrentMessage] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [isConnected, setIsConnected] = useState(false);
+  const [state, dispatch] = useReducer(chatReducer, initialState);
+  const { messages, isTyping, loading, isConnected, currentMessage } = state;
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // اسکرول به آخرین پیام
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // شروع خودکار ارزیابی با درخواست HTTP
+  // شروع ارزیابی
   useEffect(() => {
-    // ✅ این شرط برای جلوگیری از اجرای چندباره در StrictMode است
-    let isMounted = true; 
+    if (!user) {
+      navigate('/');
+      return;
+    }
 
-    const startAssessment = async () => {
-      if (!user) {
+    dispatch({ type: 'START_LOADING' });
+    toast.success('در حال شروع سناریو...');
+
+    fetch('https://cofe-code.com/webhook/moshaver', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'شروع کنیم' }),
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Network response was not ok');
+        return res.text();
+      })
+      .then(text => {
+        dispatch({ type: 'CONNECTION_COMPLETE' });
+        if (!text.trim()) return;
+
+        const data = JSON.parse(text);
+        if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
+          processAiMessages(data.messages);
+        }
+      })
+      .catch(error => {
+        console.error('Error starting assessment:', error);
+        toast.error('خطا در شروع ارزیابی.');
         navigate('/');
-        return;
-      }
-
-      setLoading(true);
-      toast.success('در حال شروع سناریو...');
-      
-      try {
-        const response = await fetch('https://cofe-code.com/webhook/moshaver', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: "شروع کنیم" })
-        });
-
-        if (!response.ok) throw new Error('Network response was not ok');
-
-        const responseText = await response.text();
-        if (!responseText.trim()) {
-          if (isMounted) {
-            setLoading(false);
-            setIsConnected(true);
-          }
-          return;
-        }
-
-        const data = JSON.parse(responseText);
-
-        if (isMounted) {
-          setLoading(false);
-          setIsConnected(true);
-
-          if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
-            for (const msg of data.messages) {
-              await new Promise(resolve => setTimeout(resolve, 1500));
-
-              let messageType: 'ai1' | 'ai2' = 'ai1';
-              if (msg.character.includes('رضا')) {
-                messageType = 'ai2';
-              }
-              
-              const aiMessage: LocalChatMessage = {
-                type: messageType,
-                content: msg.content,
-                timestamp: new Date(),
-                character: msg.character,
-                id: `ai-${Date.now()}-${Math.random()}`
-              };
-              
-              setMessages(prevMessages => [...prevMessages, aiMessage]);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error starting assessment:", error);
-        toast.error("خطا در شروع ارزیابی. لطفاً دوباره تلاش کنید.");
-        if (isMounted) {
-          setLoading(false);
-          navigate('/');
-        }
-      }
-    };
-
-    startAssessment();
-
-    // ✅ تابع Cleanup برای جلوگیری از به‌روزرسانی state روی کامپوننت حذف شده
-    return () => {
-      isMounted = false;
-    };
+      });
   }, [user, navigate]);
 
+  // تابع برای پردازش پیام‌های AI
+  const processAiMessages = async (aiMessages: any[]) => {
+    for (const msg of aiMessages) {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      let messageType: 'ai1' | 'ai2' = 'ai1';
+      if (msg.character.includes('رضا')) {
+        messageType = 'ai2';
+      }
+      dispatch({
+        type: 'ADD_MESSAGE',
+        payload: {
+          type: messageType,
+          content: msg.content,
+          timestamp: new Date(),
+          character: msg.character,
+          id: `ai-${Date.now()}-${Math.random()}`,
+        },
+      });
+    }
+  };
 
+  // ارسال پیام کاربر
   const handleSendMessage = async () => {
     if (!currentMessage.trim() || isTyping || !isConnected) return;
 
-    const userMessage: LocalChatMessage = {
-      type: 'user',
-      content: currentMessage,
-      timestamp: new Date(),
-      id: `user-${Date.now()}`
-    };
-    
-    // ۱. ابتدا پیام کاربر را به لیست اضافه می‌کنیم
-    setMessages(prev => [...prev, userMessage]);
+    // افزودن پیام کاربر
+    dispatch({
+      type: 'ADD_MESSAGE',
+      payload: {
+        type: 'user',
+        content: currentMessage,
+        timestamp: new Date(),
+        id: `user-${Date.now()}`,
+      },
+    });
+
     const messageToSend = currentMessage;
-    setCurrentMessage('');
-    setIsTyping(true);
+    dispatch({ type: 'UPDATE_INPUT', payload: '' });
+    dispatch({ type: 'START_TYPING' });
 
     try {
       const response = await fetch('https://cofe-code.com/webhook/moshaver', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: messageToSend })
+        body: JSON.stringify({ message: messageToSend }),
       });
-
       if (!response.ok) throw new Error('Network response was not ok');
 
       const responseText = await response.text();
-
-      // ۲. انیمیشن تایپ را متوقف می‌کنیم
-      setIsTyping(false);
+      dispatch({ type: 'STOP_TYPING' });
 
       if (!responseText.trim()) return;
       const data = JSON.parse(responseText);
-      
+
       if (data.analysis) {
-        toast.info('ارزیابی تکمیل شد! در حال انتقال به صفحه نتایج...');
+        toast.info('ارزیابی تکمیل شد!');
         navigate('/results', { state: { analysis: data.analysis } });
         return;
       }
-
-      // ۳. پیام‌های AI را به لیست اضافه می‌کنیم
+      
       if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
-        for (const msg of data.messages) {
-          await new Promise(resolve => setTimeout(resolve, 1500));
-
-          let messageType: 'ai1' | 'ai2' = 'ai1';
-          if (msg.character.includes('رضا')) {
-            messageType = 'ai2';
-          }
-          
-          const aiMessage: LocalChatMessage = {
-            type: messageType,
-            content: msg.content,
-            timestamp: new Date(),
-            character: msg.character,
-            id: `ai-${Date.now()}-${Math.random()}`
-          };
-          setMessages(prev => [...prev, aiMessage]);
-        }
+        await processAiMessages(data.messages);
       }
     } catch (error) {
-      console.error("Error sending message:", error);
-      toast.error("خطا در ارسال پیام. لطفاً دوباره تلاش کنید.");
-      setIsTyping(false);
+      console.error('Error sending message:', error);
+      toast.error('خطا در ارسال پیام.');
+      dispatch({ type: 'STOP_TYPING' });
     }
   };
 
@@ -181,39 +184,46 @@ const Assessment = () => {
       handleSendMessage();
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-executive-pearl via-white to-executive-silver/30 flex items-center justify-center">
-        {/* ... محتوای لودینگ ... */}
-      </div>
-    );
-  }
-
+  
+  // ... بقیه JSX شما بدون تغییر باقی می‌ماند ...
+  // ... فقط onChange مربوط به Textarea باید تغییر کند ...
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-executive-pearl via-white to-executive-silver/20 flex flex-col">
-      <header className="bg-white/95 backdrop-blur-xl border-b border-executive-ash-light/30 p-6 sticky top-0 z-50 shadow-subtle">
-        {/* ... JSX هدر ... */}
-      </header>
-
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* ✅ از شناسه منحصر به فرد به عنوان key استفاده می‌کنیم */}
-          {messages.map((message) => ( 
-            <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} items-end gap-6 mb-8`}>
-              {/* ... بقیه JSX پیام‌ها ... */}
-            </div>
-          ))}
-          {isTyping && (
+       <header> 
+        {/* ... JSX هدر شما بدون تغییر ... */}
+       </header>
+       <div className="flex-1 overflow-y-auto p-6">
+         <div className="max-w-4xl mx-auto space-y-6">
+           {messages.map((message) => (
+             <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} items-end gap-6 mb-8`}>
+                {/* ... بقیه JSX پیام‌ها ... */}
+             </div>
+           ))}
+           {isTyping && (
             // ... JSX انیمیشن تایپینگ ...
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-      </div>
-
-      <div className="bg-white/95 backdrop-blur-xl border-t border-executive-ash-light/30 p-6 shadow-subtle">
-        {/* ... JSX بخش ورودی ... */}
-      </div>
+           )}
+           <div ref={messagesEndRef} />
+         </div>
+       </div>
+       <div className="bg-white/95 backdrop-blur-xl border-t border-executive-ash-light/30 p-6 shadow-subtle">
+         <div className="max-w-4xl mx-auto flex gap-4 items-end">
+           <div className="flex-1">
+             <Textarea
+               value={currentMessage}
+               onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: e.target.value })} // ✅ تغییر کلیدی
+               onKeyDown={handleKeyPress}
+               placeholder="پاسخ خود را اینجا بنویسید..."
+               className="min-h-[60px] max-h-[150px] text-base p-6 rounded-2xl border-2 border-executive-ash-light/50 focus:border-executive-navy resize-none bg-white/80 backdrop-blur-sm shadow-subtle transition-all duration-300"
+               disabled={isTyping || !isConnected}
+             />
+           </div>
+           <Button onClick={handleSendMessage} disabled={!currentMessage.trim() || isTyping || !isConnected} >
+             {/* ... */}
+           </Button>
+         </div>
+         {/* ... */}
+       </div>
     </div>
   );
 };
