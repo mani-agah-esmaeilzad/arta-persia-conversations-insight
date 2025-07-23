@@ -66,16 +66,22 @@ const Assessment = () => {
 
   const handleAiResponse = (data: any) => {
     if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
-      if (aiCharacters.length === 0) {
-        const uniqueCharacters = [...new Set<string>(data.messages.map((msg: any) => msg.character))];
-        setAiCharacters(uniqueCharacters.slice(0, 2));
+      const incomingCharacters = [...new Set(data.messages.map((msg: any) => msg.character))] as string[];
 
+      if (aiCharacters.length === 0 && incomingCharacters.length >= 2) {
+        setAiCharacters(incomingCharacters.slice(0, 2));
       }
+
+      const [char1, char2] = aiCharacters.length > 0
+        ? aiCharacters
+        : incomingCharacters.slice(0, 2);
 
       data.messages.forEach((msg: any, index: number) => {
         setTimeout(() => {
           let messageType: 'ai1' | 'ai2' = 'ai1';
-          if (aiCharacters[1] && msg.character === aiCharacters[1]) messageType = 'ai2';
+          if (msg.character === char2) {
+            messageType = 'ai2';
+          }
 
           const aiMessage: LocalChatMessage = {
             type: messageType,
@@ -133,41 +139,153 @@ const Assessment = () => {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">در حال اتصال...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-executive-pearl via-white to-executive-silver/30 flex items-center justify-center">
+        <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-12 shadow-luxury border border-white/20 text-center max-w-md">
+          <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-executive-navy to-executive-navy-light rounded-2xl flex items-center justify-center animate-pulse shadow-lg">
+            <MessageCircle className="w-10 h-10 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-executive-charcoal mb-4">در حال اتصال به سرور...</h2>
+          <p className="text-executive-ash">لطفاً کمی صبر کنید</p>
+          <div className="mt-6 flex justify-center space-x-1">
+            <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+            <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="p-4 border-b bg-white shadow">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/')}><ArrowLeft /></button>
-          <h1 className="font-bold">جلسه تعاملی سه‌نفره</h1>
+    <div className="min-h-screen bg-gradient-to-br from-executive-pearl via-white to-executive-silver/20 flex flex-col">
+      {/* Header */}
+      <header className="bg-white/95 backdrop-blur-xl border-b border-executive-ash-light/30 p-6 sticky top-0 z-50 shadow-subtle">
+        <div className="flex items-center justify-between max-w-6xl mx-auto">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/')}
+              className="w-12 h-12 bg-executive-ash-light/50 rounded-xl flex items-center justify-center hover:bg-executive-navy/10 transition-all duration-300 group"
+            >
+              <ArrowLeft className="w-6 h-6 text-executive-ash group-hover:text-executive-navy" />
+            </button>
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-executive-navy to-executive-navy-light rounded-2xl flex items-center justify-center shadow-lg">
+                <Bot className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-executive-charcoal">جلسه تعاملی سه‌نفره</h1>
+                <div className="flex items-center gap-4 text-sm">
+                  {aiCharacters[0] && <div className="flex items-center gap-2 text-blue-600">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    {aiCharacters[0]}
+                  </div>}
+                  {aiCharacters[1] && <div className="flex items-center gap-2 text-green-600">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    {aiCharacters[1]}
+                  </div>}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 bg-executive-gold-light/20 px-4 py-2 rounded-xl border border-executive-gold/20">
+            <Shield className="w-5 h-5 text-executive-gold" />
+            <span className="text-sm font-semibold text-executive-charcoal">ارزیابی امن</span>
+          </div>
         </div>
       </header>
 
-      <div className="flex-1 p-4 overflow-y-auto">
-        {messages.map((msg, i) => (
-          <div key={i} className={`my-2 ${msg.type === 'user' ? 'text-right' : 'text-left'}`}>
-            {msg.character && <div className="text-xs text-gray-500">{msg.character}</div>}
-            <div className="inline-block p-3 rounded bg-gray-100">{msg.content}</div>
-          </div>
-        ))}
-        {isTyping && <div className="text-gray-400">...</div>}
-        <div ref={messagesEndRef} />
+      {/* Chat Messages */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {messages.map((message, index) => (
+            <div key={index} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} items-end gap-6 mb-8`}>
+              <div className={`flex items-end gap-6 max-w-[85%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                <div className="flex-shrink-0">
+                  <ChatCharacter 
+                    type={message.type === 'user' ? 'user' : 'ai'} 
+                    isSpeaking={index === messages.length - 1 && message.type !== 'user'}
+                  />
+                </div>
+                <div className={`rounded-3xl p-6 shadow-subtle backdrop-blur-sm relative ${
+                  message.type === 'user'
+                    ? 'bg-yellow-50 border border-yellow-200 rounded-br-lg'
+                    : message.type === 'ai1'
+                    ? 'bg-blue-50 border border-blue-200 rounded-bl-lg'
+                    : 'bg-green-50 border border-green-200 rounded-bl-lg'
+                }`}>
+                  <div className={`absolute bottom-4 w-4 h-4 transform rotate-45 ${
+                    message.type === 'user' 
+                      ? 'right-[-8px] bg-yellow-50 border-r border-b border-yellow-200'
+                      : message.type === 'ai1'
+                      ? 'left-[-8px] bg-blue-50 border-l border-b border-blue-200'
+                      : 'left-[-8px] bg-green-50 border-l border-b border-green-200'
+                  }`}></div>
+                  {message.character && (
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        message.type === 'ai1' ? 'bg-blue-500' : 'bg-green-500'
+                      }`}></div>
+                      <span className="text-xs font-semibold text-executive-charcoal">{message.character}</span>
+                    </div>
+                  )}
+                  <p className="leading-relaxed whitespace-pre-line text-executive-charcoal text-lg">
+                    {message.content}
+                  </p>
+                  <p className="text-xs mt-3 text-executive-ash">
+                    {message.timestamp.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+          {isTyping && (
+            <div className="flex justify-start items-end gap-6 mb-8">
+              <div className="flex items-end gap-4">
+                <div className="flex-shrink-0">
+                  <ChatCharacter type="ai" isTyping={true} isSpeaking={false} />
+                </div>
+                <div className="bg-white/90 border border-executive-ash-light/30 rounded-3xl rounded-bl-lg p-6 shadow-subtle backdrop-blur-sm relative">
+                  <div className="absolute left-[-8px] bottom-4 w-4 h-4 bg-white/90 border-l border-b border-executive-ash-light/30 transform rotate-45"></div>
+                  <div className="flex space-x-1">
+                    <div className="w-3 h-3 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-3 h-3 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-3 h-3 bg-executive-navy rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
-      <div className="p-4 border-t bg-white flex gap-2">
-        <Textarea
-          value={currentMessage}
-          onChange={e => setCurrentMessage(e.target.value)}
-          onKeyDown={handleKeyPress}
-          placeholder="پاسخ خود را بنویسید..."
-          className="flex-1"
-          disabled={isTyping || !isConnected}
-        />
-        <Button onClick={handleSendMessage} disabled={!currentMessage.trim() || isTyping || !isConnected}>
-          <Send />
-        </Button>
+      {/* Input */}
+      <div className="bg-white/95 backdrop-blur-xl border-t border-executive-ash-light/30 p-6 shadow-subtle">
+        <div className="max-w-4xl mx-auto flex gap-4 items-end">
+          <div className="flex-1">
+            <Textarea
+              value={currentMessage}
+              onChange={(e) => setCurrentMessage(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="پاسخ خود را اینجا بنویسید..."
+              className="min-h-[60px] max-h-[150px] text-base p-6 rounded-2xl border-2 border-executive-ash-light/50 focus:border-executive-navy resize-none bg-white/80 backdrop-blur-sm shadow-subtle transition-all duration-300"
+              disabled={isTyping || !isConnected}
+            />
+          </div>
+          <Button
+            onClick={handleSendMessage}
+            disabled={!currentMessage.trim() || isTyping || !isConnected}
+            className="w-14 h-14 bg-gradient-to-br from-executive-navy to-executive-navy-light hover:from-executive-navy-dark hover:to-executive-navy rounded-2xl p-0 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
+          >
+            <Send className="w-6 h-6 text-white" />
+          </Button>
+        </div>
+        <div className="max-w-4xl mx-auto mt-4">
+          <p className="text-center text-sm text-executive-ash">
+            💬 این یک جلسه ارزیابی زنده است. پاسخ‌های شما توسط هوش مصنوعی تحلیل می‌شوند
+          </p>
+        </div>
       </div>
     </div>
   );
