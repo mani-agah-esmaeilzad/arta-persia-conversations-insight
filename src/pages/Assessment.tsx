@@ -17,14 +17,13 @@ interface LocalChatMessage {
 
 const Assessment = () => {
   const navigate = useNavigate();
-  const { user, selectedSkillId } = useAuth();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<LocalChatMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const ws = useRef<WebSocket | null>(null);
 
   // اسکرول به آخرین پیام
   useEffect(() => {
@@ -43,27 +42,18 @@ const Assessment = () => {
         setLoading(true);
         toast.success('در حال شروع سناریو...');
         
-        // ارسال درخواست HTTP به n8n webhook
         const response = await fetch('https://cofe-code.com/webhook/moshaver', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message: "شروع کنیم"
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: "شروع کنیم" })
         });
 
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
 
-        // بررسی اینکه آیا محتوای JSON دارد یا نه
         const responseText = await response.text();
-        console.log('Response from webhook:', responseText);
-        
         if (!responseText.trim()) {
-          console.log('Empty response, waiting for messages...');
           setLoading(false);
           setIsConnected(true);
           return;
@@ -82,36 +72,26 @@ const Assessment = () => {
         setLoading(false);
         setIsConnected(true);
 
-        // ⏪ **کد اصلی شما:** پردازش پیام‌های دریافتی از n8n
-        console.log('Received data:', data);
+        // ✅ **کد اصلاح‌شده و قابل اطمینان:** پردازش پیام‌ها به صورت متوالی
         if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
-          console.log('Processing AI messages:', data.messages);
-          data.messages.forEach((msg: any, index: number) => {
-            console.log(`Processing message ${index}:`, msg);
-            setTimeout(() => {
-              // تشخیص نوع کاراکتر بر اساس نام
-              let messageType: 'ai1' | 'ai2' = 'ai1';
-              if (msg.character.includes('سارا') || msg.character.includes('مریم')) {
-                messageType = 'ai2';
-              }
-              
-              console.log(`Adding message with type ${messageType}:`, msg.character, msg.content);
-              const aiMessage: LocalChatMessage = {
-                type: messageType,
-                content: msg.content,
-                timestamp: new Date(),
-                character: msg.character,
-              };
-              setMessages((prev) => {
-                console.log('Previous messages:', prev);
-                const newMessages = [...prev, aiMessage];
-                console.log('New messages after adding:', newMessages);
-                return newMessages;
-              });
-            }, index * 2000); // فاصله زمانی بین پیام‌ها
-          });
-        } else {
-          console.log('Data does not match expected format:', data);
+          for (const msg of data.messages) {
+            await new Promise(resolve => setTimeout(resolve, 1500)); // تاخیر بین پیام‌ها
+
+            // منطق برای تشخیص کاراکتر بر اساس نام‌های دریافتی
+            let messageType: 'ai1' | 'ai2' = 'ai1'; // پیش‌فرض برای کاراکتر اول
+            if (msg.character.includes('رضا')) { // برای کاراکتر دوم
+              messageType = 'ai2';
+            }
+            
+            const aiMessage: LocalChatMessage = {
+              type: messageType,
+              content: msg.content,
+              timestamp: new Date(),
+              character: msg.character,
+            };
+
+            setMessages((prev) => [...prev, aiMessage]);
+          }
         }
 
       } catch (error) {
@@ -130,26 +110,18 @@ const Assessment = () => {
     try {
       const response = await fetch('https://cofe-code.com/webhook/moshaver', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: message
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: message })
       });
 
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
 
-      // بررسی اینکه آیا محتوای JSON دارد یا نه
       const responseText = await response.text();
-      console.log('User message response:', responseText);
-      
       setIsTyping(false);
 
       if (!responseText.trim()) {
-        console.log('Empty response for user message');
         return;
       }
 
@@ -160,33 +132,32 @@ const Assessment = () => {
         console.error('JSON parse error for user message:', parseError);
         return;
       }
-
-      // بررسی اتمام ارزیابی
+      
       if (data.analysis) {
         toast.info('ارزیابی تکمیل شد! در حال انتقال به صفحه نتایج...');
         navigate('/results', { state: { analysis: data.analysis } });
         return;
       }
 
-      // ⏪ **کد اصلی شما:** پردازش پیام‌های جدید AI
+      // ✅ **کد اصلاح‌شده و قابل اطمینان:** پردازش پیام‌های جدید AI
       if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
-        data.messages.forEach((msg: any, index: number) => {
-          setTimeout(() => {
-            // تشخیص نوع کاراکتر بر اساس نام
-            let messageType: 'ai1' | 'ai2' = 'ai1';
-            if (msg.character.includes('سارا') || msg.character.includes('مریم')) {
-              messageType = 'ai2';
-            }
-            
-            const aiMessage: LocalChatMessage = {
-              type: messageType,
-              content: msg.content,
-              timestamp: new Date(),
-              character: msg.character,
-            };
-            setMessages((prev) => [...prev, aiMessage]);
-          }, index * 2000);
-        });
+        for (const msg of data.messages) {
+          await new Promise(resolve => setTimeout(resolve, 1500));
+
+          let messageType: 'ai1' | 'ai2' = 'ai1';
+          if (msg.character.includes('رضا')) { // یا هر نام دیگری برای کاراکتر دوم
+            messageType = 'ai2';
+          }
+          
+          const aiMessage: LocalChatMessage = {
+            type: messageType,
+            content: msg.content,
+            timestamp: new Date(),
+            character: msg.character,
+          };
+
+          setMessages((prev) => [...prev, aiMessage]);
+        }
       }
 
     } catch (error) {
@@ -206,11 +177,11 @@ const Assessment = () => {
     };
     
     setMessages(prev => [...prev, userMessage]);
+    const messageToSend = currentMessage;
     setCurrentMessage('');
     setIsTyping(true);
     
-    // ارسال پیام کاربر به n8n
-    await sendMessageToN8N(currentMessage);
+    await sendMessageToN8N(messageToSend);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -241,7 +212,6 @@ const Assessment = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-executive-pearl via-white to-executive-silver/20 flex flex-col">
-      {/* Header */}
       <header className="bg-white/95 backdrop-blur-xl border-b border-executive-ash-light/30 p-6 sticky top-0 z-50 shadow-subtle">
         <div className="flex items-center justify-between max-w-6xl mx-auto">
           <div className="flex items-center gap-4">
@@ -260,11 +230,11 @@ const Assessment = () => {
                 <div className="flex items-center gap-4 text-sm">
                   <div className="flex items-center gap-2 text-blue-600">
                     <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-blue-500 animate-pulse' : 'bg-gray-400'}`}></div>
-                    فرهاد (طراح)
+                    علی (مهندس)
                   </div>
                   <div className="flex items-center gap-2 text-green-600">
                     <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
-                    مریم (معمار)
+                    رضا (هنرمند)
                   </div>
                 </div>
               </div>
@@ -277,7 +247,6 @@ const Assessment = () => {
         </div>
       </header>
 
-      {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-4xl mx-auto space-y-6">
           {messages.map((message, index) => (
@@ -289,7 +258,6 @@ const Assessment = () => {
                     isSpeaking={index === messages.length - 1 && message.type !== 'user'}
                   />
                 </div>
-                
                 <div className={`rounded-3xl p-6 shadow-subtle backdrop-blur-sm relative ${
                   message.type === 'user'
                     ? 'bg-gradient-to-br from-executive-gold/10 to-executive-gold-light/20 border border-executive-gold/20 rounded-br-lg'
@@ -304,7 +272,6 @@ const Assessment = () => {
                       ? 'left-[-8px] bg-gradient-to-br from-blue-50 to-blue-100/50 border-l border-b border-blue-200/50'
                       : 'left-[-8px] bg-gradient-to-br from-green-50 to-green-100/50 border-l border-b border-green-200/50'
                   }`}></div>
-                  
                   {message.character && (
                     <div className="flex items-center gap-2 mb-2">
                       <div className={`w-2 h-2 rounded-full ${
@@ -313,7 +280,6 @@ const Assessment = () => {
                       <span className="text-xs font-semibold text-executive-charcoal">{message.character}</span>
                     </div>
                   )}
-                  
                   <p className="leading-relaxed whitespace-pre-line text-executive-charcoal text-lg">
                     {message.content}
                   </p>
@@ -326,7 +292,6 @@ const Assessment = () => {
               </div>
             </div>
           ))}
-
           {isTyping && (
             <div className="flex justify-start items-end gap-6 mb-8">
               <div className="flex items-end gap-4">
@@ -344,12 +309,10 @@ const Assessment = () => {
               </div>
             </div>
           )}
-          
           <div ref={messagesEndRef} />
         </div>
       </div>
 
-      {/* Input Area */}
       <div className="bg-white/95 backdrop-blur-xl border-t border-executive-ash-light/30 p-6 shadow-subtle">
         <div className="max-w-4xl mx-auto flex gap-4 items-end">
           <div className="flex-1">
@@ -362,7 +325,6 @@ const Assessment = () => {
               disabled={isTyping || !isConnected}
             />
           </div>
-          
           <Button
             onClick={handleSendMessage}
             disabled={!currentMessage.trim() || isTyping || !isConnected}
@@ -371,7 +333,6 @@ const Assessment = () => {
             <Send className="w-6 h-6 text-white" />
           </Button>
         </div>
-        
         <div className="max-w-4xl mx-auto mt-4">
           <p className="text-center text-sm text-executive-ash">
             💬 این یک جلسه ارزیابی زنده است. پاسخ‌های شما توسط هوش مصنوعی تحلیل می‌شوند
