@@ -67,8 +67,9 @@ const Assessment = () => {
   const handleAiResponse = (data: any) => {
     if (data.type === 'ai_turn' && Array.isArray(data.messages)) {
       if (aiCharacters.length === 0) {
-        const uniqueCharacters = [...new Set(data.messages.map((msg: any) => msg.character))];
+        const uniqueCharacters = [...new Set<string>(data.messages.map((msg: any) => msg.character))];
         setAiCharacters(uniqueCharacters.slice(0, 2));
+
       }
 
       data.messages.forEach((msg: any, index: number) => {
