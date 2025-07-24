@@ -280,7 +280,7 @@ const Assessment = () => {
               {/* AI Character Layout */}
               {msg.type !== 'user' ? (
                 <div className="flex items-start gap-2 max-w-[85%]">
-                  <div className="w-6 h-6 flex-shrink-0 mt-1">
+                  <div className="w-4 h-4 flex-shrink-0 mt-1">
                     <ChatCharacter 
                       type="ai" 
                       isSpeaking={i === messages.length - 1} 
@@ -323,7 +323,7 @@ const Assessment = () => {
           {isTyping && (
             <div className="flex justify-start mb-4">
               <div className="flex items-start gap-2 max-w-[85%]">
-                <div className="w-6 h-6 flex-shrink-0 mt-1">
+                <div className="w-4 h-4 flex-shrink-0 mt-1">
                   <ChatCharacter type="ai" isTyping={true} isSpeaking={false} />
                 </div>
                 <div className="flex flex-col">
