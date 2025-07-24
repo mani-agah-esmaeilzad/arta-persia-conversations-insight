@@ -49,10 +49,10 @@ const Assessment = () => {
 
         const responseText = await response.text();
         console.log('Raw response:', responseText);
-        
+
         setLoading(false);
         setIsConnected(true);
-        
+
         if (!responseText.trim()) {
           console.log('Empty response received');
           return;
@@ -61,7 +61,7 @@ const Assessment = () => {
         try {
           const parsed = JSON.parse(responseText);
           console.log('Parsed response:', parsed);
-          
+
           let json;
           if (parsed.response) {
             json = parsed.response
@@ -78,12 +78,12 @@ const Assessment = () => {
         } catch (parseError) {
           console.error('Parse error:', parseError);
           console.log('Trying to parse as direct JSON...');
-          
+
           const cleanJson = responseText
             .replace(/^```json\n/, '')
             .replace(/\n```$/, '')
             .trim();
-          
+
           const data = JSON.parse(cleanJson);
           console.log('Cleaned data:', data);
           handleAiResponse(data);
@@ -101,7 +101,7 @@ const Assessment = () => {
 
   const handleAiResponse = (data: any) => {
     console.log('Processing AI response:', data);
-    
+
     if (Array.isArray(data.messages)) {
       const incomingCharacters = [...new Set(data.messages.map((msg: any) => msg.character))] as string[];
       const [char1, char2] = aiCharacters.length > 0 ? aiCharacters : incomingCharacters.slice(0, 2);
@@ -151,7 +151,7 @@ const Assessment = () => {
 
       const responseText = await response.text();
       console.log('Raw response:', responseText);
-      
+
       if (!responseText.trim()) {
         console.log('Empty response received');
         return;
@@ -160,7 +160,7 @@ const Assessment = () => {
       try {
         const parsed = JSON.parse(responseText);
         console.log('Parsed response:', parsed);
-        
+
         let json;
         if (parsed.response) {
           json = parsed.response
@@ -177,12 +177,12 @@ const Assessment = () => {
       } catch (parseError) {
         console.error('Parse error:', parseError);
         console.log('Trying to parse as direct JSON...');
-        
+
         const cleanJson = responseText
           .replace(/^```json\n/, '')
           .replace(/\n```$/, '')
           .trim();
-        
+
         const data = JSON.parse(cleanJson);
         console.log('Cleaned data:', data);
         handleAiResponse(data);
@@ -196,17 +196,17 @@ const Assessment = () => {
 
   const handleSendMessage = async () => {
     if (!currentMessage.trim() || isTyping || !isConnected) return;
-    
+
     const userMessage: LocalChatMessage = {
       type: 'user',
       content: currentMessage,
       timestamp: new Date()
     };
-    
+
     setMessages(prev => [...prev, userMessage]);
     setCurrentMessage('');
     setIsTyping(true);
-    
+
     await sendMessageToN8N(currentMessage);
   };
 
@@ -242,8 +242,8 @@ const Assessment = () => {
       <header className="bg-white/95 backdrop-blur-xl border-b border-executive-ash-light/30 p-3 sticky top-0 z-50 shadow-subtle">
         <div className="flex items-center justify-between max-w-full mx-auto">
           <div className="flex items-center gap-3">
-            <button 
-              onClick={() => navigate('/')} 
+            <button
+              onClick={() => navigate('/')}
               className="w-8 h-8 bg-executive-ash-light/50 rounded-lg flex items-center justify-center hover:bg-executive-navy/10 transition-all duration-300 group"
             >
               <ArrowLeft className="w-4 h-4 text-executive-ash group-hover:text-executive-navy" />
@@ -280,11 +280,11 @@ const Assessment = () => {
               {/* AI Character Layout */}
               {msg.type !== 'user' ? (
                 <div className="flex items-start gap-2 max-w-[85%]">
-                  <div className="w-4 h-4 flex-shrink-0 mt-1">
-                    <ChatCharacter 
-                      type="ai" 
-                      isSpeaking={i === messages.length - 1} 
-                    />
+                  <div className="flex-shrink-0 mt-1">
+                    {/* ✅ ریسپانسیو آواتار: کوچیک در موبایل */}
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden bg-executive-navy flex items-center justify-center text-white text-xs font-bold shadow-md">
+                      {msg.character?.charAt(0).toUpperCase() ?? 'A'}
+                    </div>
                   </div>
                   <div className="flex flex-col">
                     {msg.character && (
@@ -292,11 +292,10 @@ const Assessment = () => {
                         {msg.character}
                       </span>
                     )}
-                    <div className={`rounded-2xl p-3 shadow-sm ${
-                      msg.type === 'ai1'
+                    <div className={`rounded-2xl p-3 shadow-sm ${msg.type === 'ai1'
                         ? 'bg-gradient-to-br from-blue-50 to-blue-100/60 border border-blue-200/60 rounded-bl-md'
                         : 'bg-gradient-to-br from-green-50 to-green-100/60 border border-green-200/60 rounded-bl-md'
-                    }`}>
+                      }`}>
                       <p className="text-sm leading-relaxed whitespace-pre-line text-executive-charcoal">
                         {msg.content}
                       </p>
@@ -307,7 +306,7 @@ const Assessment = () => {
                   </div>
                 </div>
               ) : (
-                /* User Message Layout */
+                // User Message Layout
                 <div className="max-w-[85%] bg-gradient-to-br from-executive-gold/15 to-executive-gold-light/25 border border-executive-gold/30 rounded-2xl rounded-br-md p-3 shadow-sm">
                   <p className="text-sm leading-relaxed whitespace-pre-line text-executive-charcoal">
                     {msg.content}
@@ -319,7 +318,7 @@ const Assessment = () => {
               )}
             </div>
           ))}
-          
+
           {isTyping && (
             <div className="flex justify-start mb-4">
               <div className="flex items-start gap-2 max-w-[85%]">
@@ -357,9 +356,9 @@ const Assessment = () => {
               className="flex-1 min-h-[60px] max-h-[120px] text-sm p-3 rounded-2xl border border-executive-ash-light/50 focus:border-executive-navy resize-none bg-white/90 backdrop-blur-sm shadow-md transition-all duration-300"
               disabled={isTyping || !isConnected}
             />
-            <Button 
-              onClick={handleSendMessage} 
-              disabled={!currentMessage.trim() || isTyping || !isConnected} 
+            <Button
+              onClick={handleSendMessage}
+              disabled={!currentMessage.trim() || isTyping || !isConnected}
               className="w-12 h-12 bg-gradient-to-br from-executive-navy to-executive-navy-light hover:from-executive-navy-dark hover:to-executive-navy rounded-2xl p-0 shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:transform-none"
             >
               <Send className="w-5 h-5 text-white" />
