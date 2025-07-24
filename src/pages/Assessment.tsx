@@ -276,57 +276,67 @@ const Assessment = () => {
       <main className="flex-1 overflow-y-auto p-3">
         <div className="max-w-full mx-auto space-y-3">
           {messages.map((msg, i) => (
-            <div key={i} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'} mb-4`}>
-              {/* Character Avatar and Name */}
-              {msg.type !== 'user' && (
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-6 h-6 flex-shrink-0">
+            <div key={i} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
+              {/* AI Character Layout */}
+              {msg.type !== 'user' ? (
+                <div className="flex items-start gap-2 max-w-[85%]">
+                  <div className="w-6 h-6 flex-shrink-0 mt-1">
                     <ChatCharacter 
                       type="ai" 
                       isSpeaking={i === messages.length - 1} 
                     />
                   </div>
-                  {msg.character && (
-                    <span className="text-xs font-semibold text-executive-charcoal bg-white/80 px-2 py-0.5 rounded-full border border-executive-ash-light/40">
-                      {msg.character}
-                    </span>
-                  )}
+                  <div className="flex flex-col">
+                    {msg.character && (
+                      <span className="text-xs font-semibold text-executive-charcoal bg-white/80 px-2 py-0.5 rounded-full border border-executive-ash-light/40 mb-1 self-start">
+                        {msg.character}
+                      </span>
+                    )}
+                    <div className={`rounded-2xl p-3 shadow-sm ${
+                      msg.type === 'ai1'
+                        ? 'bg-gradient-to-br from-blue-50 to-blue-100/60 border border-blue-200/60 rounded-bl-md'
+                        : 'bg-gradient-to-br from-green-50 to-green-100/60 border border-green-200/60 rounded-bl-md'
+                    }`}>
+                      <p className="text-sm leading-relaxed whitespace-pre-line text-executive-charcoal">
+                        {msg.content}
+                      </p>
+                      <p className="text-xs mt-1 text-executive-ash/70">
+                        {msg.timestamp.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* User Message Layout */
+                <div className="max-w-[85%] bg-gradient-to-br from-executive-gold/15 to-executive-gold-light/25 border border-executive-gold/30 rounded-2xl rounded-br-md p-3 shadow-sm">
+                  <p className="text-sm leading-relaxed whitespace-pre-line text-executive-charcoal">
+                    {msg.content}
+                  </p>
+                  <p className="text-xs mt-1 text-executive-ash/70">
+                    {msg.timestamp.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
                 </div>
               )}
-              
-              {/* Message Bubble */}
-              <div className={`max-w-[85%] rounded-2xl p-3 shadow-sm ${
-                msg.type === 'user'
-                  ? 'bg-gradient-to-br from-executive-gold/15 to-executive-gold-light/25 border border-executive-gold/30 rounded-br-md'
-                  : msg.type === 'ai1'
-                  ? 'bg-gradient-to-br from-blue-50 to-blue-100/60 border border-blue-200/60 rounded-bl-md ml-8'
-                  : 'bg-gradient-to-br from-green-50 to-green-100/60 border border-green-200/60 rounded-bl-md ml-8'
-              }`}>
-                <p className="text-sm leading-relaxed whitespace-pre-line text-executive-charcoal">
-                  {msg.content}
-                </p>
-                <p className="text-xs mt-1 text-executive-ash/70">
-                  {msg.timestamp.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
             </div>
           ))}
           
           {isTyping && (
-            <div className="flex flex-col items-start mb-4">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-6 h-6 flex-shrink-0">
+            <div className="flex justify-start mb-4">
+              <div className="flex items-start gap-2 max-w-[85%]">
+                <div className="w-6 h-6 flex-shrink-0 mt-1">
                   <ChatCharacter type="ai" isTyping={true} isSpeaking={false} />
                 </div>
-                <span className="text-xs font-semibold text-executive-charcoal bg-white/80 px-2 py-0.5 rounded-full border border-executive-ash-light/40">
-                  در حال تایپ...
-                </span>
-              </div>
-              <div className="bg-white/95 border border-executive-ash-light/40 rounded-2xl rounded-bl-md p-3 shadow-sm animate-pulse ml-8">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" />
-                  <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce delay-150" />
-                  <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce delay-300" />
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold text-executive-charcoal bg-white/80 px-2 py-0.5 rounded-full border border-executive-ash-light/40 mb-1 self-start">
+                    در حال تایپ...
+                  </span>
+                  <div className="bg-white/95 border border-executive-ash-light/40 rounded-2xl rounded-bl-md p-3 shadow-sm animate-pulse">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" />
+                      <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce delay-150" />
+                      <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce delay-300" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
