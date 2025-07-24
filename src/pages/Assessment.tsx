@@ -277,35 +277,37 @@ const Assessment = () => {
         <div className="max-w-full mx-auto space-y-3">
           {messages.map((msg, i) => (
             <div key={i} className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'} mb-4`}>
-              {/* Character Avatar - Above Message */}
+              {/* Character Avatar - Better Layout */}
               {msg.type !== 'user' && (
-                <div className="flex items-center gap-2 mb-1 px-2">
-                  <div className="w-6 h-6 flex-shrink-0">
+                <div className="flex items-start gap-2 mb-2">
+                  <div className="w-8 h-8 flex-shrink-0">
                     <ChatCharacter 
                       type="ai" 
                       isSpeaking={i === messages.length - 1} 
                     />
                   </div>
-                  {msg.character && (
-                    <span className="text-xs font-bold text-executive-charcoal bg-white/70 px-2 py-1 rounded-full">
-                      {msg.character}
-                    </span>
-                  )}
+                  <div className="flex flex-col gap-1">
+                    {msg.character && (
+                      <span className="text-xs font-medium text-executive-charcoal/80 bg-white/90 px-2 py-0.5 rounded-full self-start">
+                        {msg.character}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
               
               {/* Message Bubble */}
-              <div className={`max-w-[80%] rounded-2xl p-3 shadow-md backdrop-blur-sm ${
+              <div className={`max-w-[85%] rounded-2xl p-3 shadow-sm ${
                 msg.type === 'user'
-                  ? 'bg-gradient-to-br from-executive-gold/15 to-executive-gold-light/25 border border-executive-gold/30 rounded-br-md'
+                  ? 'bg-gradient-to-br from-executive-gold/15 to-executive-gold-light/25 border border-executive-gold/30 rounded-br-md ml-2'
                   : msg.type === 'ai1'
-                  ? 'bg-gradient-to-br from-blue-50 to-blue-100/60 border border-blue-200/60 rounded-bl-md'
-                  : 'bg-gradient-to-br from-green-50 to-green-100/60 border border-green-200/60 rounded-bl-md'
+                  ? 'bg-gradient-to-br from-blue-50 to-blue-100/60 border border-blue-200/60 rounded-bl-md mr-10'
+                  : 'bg-gradient-to-br from-green-50 to-green-100/60 border border-green-200/60 rounded-bl-md mr-10'
               }`}>
                 <p className="text-sm leading-relaxed whitespace-pre-line text-executive-charcoal">
                   {msg.content}
                 </p>
-                <p className="text-xs mt-2 text-executive-ash/80">
+                <p className="text-xs mt-1 text-executive-ash/70">
                   {msg.timestamp.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
@@ -314,12 +316,12 @@ const Assessment = () => {
           
           {isTyping && (
             <div className="flex flex-col items-start mb-4">
-              <div className="flex items-center gap-2 mb-1 px-2">
-                <div className="w-6 h-6 flex-shrink-0">
+              <div className="flex items-start gap-2 mb-2">
+                <div className="w-8 h-8 flex-shrink-0">
                   <ChatCharacter type="ai" isTyping={true} isSpeaking={false} />
                 </div>
               </div>
-              <div className="bg-white/95 border border-executive-ash-light/40 rounded-2xl rounded-bl-md p-3 shadow-md backdrop-blur-sm animate-pulse">
+              <div className="bg-white/95 border border-executive-ash-light/40 rounded-2xl rounded-bl-md p-3 shadow-sm animate-pulse mr-10">
                 <div className="flex space-x-1">
                   <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce" />
                   <div className="w-2 h-2 bg-executive-navy rounded-full animate-bounce delay-150" />

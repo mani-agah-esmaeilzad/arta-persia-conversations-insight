@@ -34,15 +34,15 @@ const Index = () => {
       </div>
 
       {/* Header */}
-      <header className="relative z-10 px-8 py-6 bg-white/90 backdrop-blur-xl border-b border-executive-ash-light/30">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-executive-navy to-executive-navy-light rounded-xl flex items-center justify-center shadow-lg">
-              <Shield className="w-7 h-7 text-white" />
+      <header className="relative z-10 px-4 py-4 bg-white/90 backdrop-blur-xl border-b border-executive-ash-light/30">
+        <div className="max-w-full mx-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-executive-navy to-executive-navy-light rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+              <Shield className="w-5 h-5 text-white" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-executive-charcoal">سامانه ارزیابی مهارت‌های حرفه‌ای</h1>
-              <p className="text-executive-ash text-sm">تحلیل دقیق و علمی مهارت‌های شما</p>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg font-bold text-executive-charcoal leading-tight">سامانه ارزیابی مهارت‌های حرفه‌ای</h1>
+              <p className="text-executive-ash text-xs">تحلیل دقیق و علمی مهارت‌های شما</p>
             </div>
           </div>
           
