@@ -15,6 +15,9 @@ interface LocalChatMessage {
   character?: string;
 }
 
+// <--- ۱. تغییر آدرس سرور به سرور محلی پایتون
+const API_BASE_URL = 'http://127.0.0.1:8000';
+
 const Assessment = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -24,6 +27,10 @@ const Assessment = () => {
   const [loading, setLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [aiCharacters, setAiCharacters] = useState<string[]>([]);
+
+  // <--- ۲. اضافه کردن State برای نگهداری Session ID
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,58 +48,34 @@ const Assessment = () => {
         setLoading(true);
         toast.success('در حال شروع سناریو...');
 
-        const response = await fetch('https://cofe-code.com/webhook/moshaver', {
+        // <--- ۳. تغییر اندپوینت و متد درخواست برای شروع سناریو
+        const response = await fetch(`${API_BASE_URL}/start_scenario`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: 'شروع کنیم' })
         });
 
-        const responseText = await response.text();
-        console.log('Raw response:', responseText);
+        if (!response.ok) {
+          throw new Error(`خطای سرور: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Initial data from /start_scenario:', data);
 
         setLoading(false);
         setIsConnected(true);
 
-        if (!responseText.trim()) {
-          console.log('Empty response received');
-          return;
+        // <--- ۴. ذخیره کردن Session ID از پاسخ اولیه
+        if (data.session_id) {
+          setSessionId(data.session_id);
+          console.log('Session ID set:', data.session_id);
         }
 
-        try {
-          const parsed = JSON.parse(responseText);
-          console.log('Parsed response:', parsed);
+        handleAiResponse(data);
 
-          let json;
-          if (parsed.response) {
-            json = parsed.response
-              .replace(/^```json/, '')
-              .replace(/```$/, '')
-              .trim();
-          } else {
-            json = responseText;
-          }
-
-          const data = JSON.parse(json);
-          console.log('Final data:', data);
-          handleAiResponse(data);
-        } catch (parseError) {
-          console.error('Parse error:', parseError);
-          console.log('Trying to parse as direct JSON...');
-
-          const cleanJson = responseText
-            .replace(/^```json\n/, '')
-            .replace(/\n```$/, '')
-            .trim();
-
-          const data = JSON.parse(cleanJson);
-          console.log('Cleaned data:', data);
-          handleAiResponse(data);
-        }
       } catch (error) {
         console.error('Error starting assessment:', error);
-        toast.error("خطا در شروع ارزیابی. لطفاً دوباره تلاش کنید.");
+        toast.error("خطا در شروع ارزیابی. لطفاً از روشن بودن سرور پایتون اطمینان حاصل کنید.");
         setLoading(false);
-        navigate('/');
       }
     };
 
@@ -101,6 +84,12 @@ const Assessment = () => {
 
   const handleAiResponse = (data: any) => {
     console.log('Processing AI response:', data);
+
+    if (data.analysis) {
+      toast.info('ارزیابی تکمیل شد!');
+      navigate('/results', { state: { analysis: data.analysis } });
+      return;
+    }
 
     if (Array.isArray(data.messages)) {
       const incomingCharacters = [...new Set(data.messages.map((msg: any) => msg.character))] as string[];
@@ -111,17 +100,14 @@ const Assessment = () => {
       }
 
       let tempMessages: LocalChatMessage[] = [];
-
       data.messages.forEach((msg: any) => {
         let messageType: 'ai1' | 'ai2' = msg.character === char2 ? 'ai2' : 'ai1';
-
         const aiMessage: LocalChatMessage = {
           type: messageType,
           content: msg.content,
           timestamp: new Date(),
           character: msg.character
         };
-
         tempMessages.push(aiMessage);
       });
 
@@ -135,58 +121,33 @@ const Assessment = () => {
         }, delay);
         delay += 2000;
       });
-    } else if (data.analysis) {
-      toast.info('ارزیابی تکمیل شد!');
-      navigate('/results', { state: { analysis: data.analysis } });
     }
   };
 
-  const sendMessageToN8N = async (message: string) => {
+  const sendMessageToServer = async (message: string) => {
+    if (!sessionId) {
+      toast.error("خطای Session. لطفاً صفحه را رفرش کنید.");
+      setIsTyping(false);
+      return;
+    }
+
     try {
-      const response = await fetch('https://cofe-code.com/webhook/moshaver', {
+      // <--- ۵. استفاده از اندپوینت /chat
+      const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message })
+        // <--- ۶. ارسال پیام به همراه Session ID
+        body: JSON.stringify({ message: message, session_id: sessionId })
       });
 
-      const responseText = await response.text();
-      console.log('Raw response:', responseText);
-
-      if (!responseText.trim()) {
-        console.log('Empty response received');
-        return;
+      if (!response.ok) {
+        throw new Error(`خطای سرور: ${response.statusText}`);
       }
 
-      try {
-        const parsed = JSON.parse(responseText);
-        console.log('Parsed response:', parsed);
+      const data = await response.json();
+      console.log('Data from /chat:', data);
+      handleAiResponse(data);
 
-        let json;
-        if (parsed.response) {
-          json = parsed.response
-            .replace(/^```json/, '')
-            .replace(/```$/, '')
-            .trim();
-        } else {
-          json = responseText;
-        }
-
-        const data = JSON.parse(json);
-        console.log('Final data:', data);
-        handleAiResponse(data);
-      } catch (parseError) {
-        console.error('Parse error:', parseError);
-        console.log('Trying to parse as direct JSON...');
-
-        const cleanJson = responseText
-          .replace(/^```json\n/, '')
-          .replace(/\n```$/, '')
-          .trim();
-
-        const data = JSON.parse(cleanJson);
-        console.log('Cleaned data:', data);
-        handleAiResponse(data);
-      }
     } catch (error) {
       console.error('Error sending message:', error);
       toast.error("خطا در ارسال پیام. لطفاً دوباره تلاش کنید.");
@@ -204,10 +165,11 @@ const Assessment = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const messageToSend = currentMessage;
     setCurrentMessage('');
     setIsTyping(true);
 
-    await sendMessageToN8N(currentMessage);
+    await sendMessageToServer(messageToSend);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -277,11 +239,9 @@ const Assessment = () => {
         <div className="max-w-full mx-auto space-y-3">
           {messages.map((msg, i) => (
             <div key={i} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} mb-4`}>
-              {/* AI Character Layout */}
               {msg.type !== 'user' ? (
                 <div className="flex items-start gap-2 max-w-[85%]">
                   <div className="flex-shrink-0 mt-1">
-                    {/* ✅ ریسپانسیو آواتار: کوچیک در موبایل */}
                     <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden bg-executive-navy flex items-center justify-center text-white text-xs font-bold shadow-md">
                       {msg.character?.charAt(0).toUpperCase() ?? 'A'}
                     </div>
@@ -293,8 +253,8 @@ const Assessment = () => {
                       </span>
                     )}
                     <div className={`rounded-2xl p-3 shadow-sm ${msg.type === 'ai1'
-                        ? 'bg-gradient-to-br from-blue-50 to-blue-100/60 border border-blue-200/60 rounded-bl-md'
-                        : 'bg-gradient-to-br from-green-50 to-green-100/60 border border-green-200/60 rounded-bl-md'
+                      ? 'bg-gradient-to-br from-blue-50 to-blue-100/60 border border-blue-200/60 rounded-bl-md'
+                      : 'bg-gradient-to-br from-green-50 to-green-100/60 border border-green-200/60 rounded-bl-md'
                       }`}>
                       <p className="text-sm leading-relaxed whitespace-pre-line text-executive-charcoal">
                         {msg.content}
@@ -306,7 +266,6 @@ const Assessment = () => {
                   </div>
                 </div>
               ) : (
-                // User Message Layout
                 <div className="max-w-[85%] bg-gradient-to-br from-executive-gold/15 to-executive-gold-light/25 border border-executive-gold/30 rounded-2xl rounded-br-md p-3 shadow-sm">
                   <p className="text-sm leading-relaxed whitespace-pre-line text-executive-charcoal">
                     {msg.content}
