@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Share2, Download, Star, TrendingUp, Award, Brain, LucideIcon } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
-// A map to resolve icon names from the backend to actual components
 const iconMap: { [key: string]: LucideIcon } = {
   Award,
   TrendingUp,
@@ -12,33 +12,39 @@ const iconMap: { [key: string]: LucideIcon } = {
 
 interface Analysis {
   totalScore: number;
-  maxScore: number; // <--- اضافه کردن حداکثر امتیاز
+  maxScore: number;
   questionAnalysis: Array<{
-    question: number;
+    question: string;
     score: number;
     reasoning: string;
   }>;
   assessment: {
     level: string;
     description: string;
-    color: string;
-    bgColor: string;
-    icon: string;
+    color?: string;
+    bgColor?: string;
+    icon?: string;
   };
 }
 
 interface LocationState {
   analysis: Analysis;
+  fromQuestionnaire: number;
 }
 
 const Results = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { setCurrentQuestionnaire } = useAuth();
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [showResults, setShowResults] = useState(false);
 
   const state = location.state as LocationState;
   const analysis = state?.analysis;
+  const fromQuestionnaire = state?.fromQuestionnaire || 0;
+  
+  const TOTAL_QUESTIONNAIRES = 3; // تعداد کل پرسشنامه‌ها
+  const nextQuestionnaire = fromQuestionnaire + 1;
 
   useEffect(() => {
     if (!analysis) {
@@ -48,18 +54,24 @@ const Results = () => {
 
     const timer = setTimeout(() => {
       setIsAnalyzing(false);
-      setTimeout(() => setShowResults(true), 500); // A short delay for the animation to be visible
-    }, 2000); // Reduced delay for a better user experience
+      setTimeout(() => setShowResults(true), 500);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [analysis, navigate]);
+  
+  const handleNextQuestionnaire = () => {
+    if (nextQuestionnaire <= TOTAL_QUESTIONNAIRES) {
+      setCurrentQuestionnaire(nextQuestionnaire);
+      navigate('/assessment');
+    }
+  };
+
 
   if (isAnalyzing) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
-        <div className="h-6 bg-gradient-to-r from-purple-600 to-blue-600"></div>
-        <div className="flex items-center justify-center min-h-[calc(100vh-24px)]">
-          <div className="text-center px-6 space-y-8">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center px-6 space-y-8">
             <div className="relative">
               <div className="w-24 h-24 mx-auto bg-gradient-to-br from-purple-500 to-blue-600 rounded-3xl flex items-center justify-center animate-pulse">
                 <Brain className="w-12 h-12 text-white" />
@@ -80,7 +92,6 @@ const Results = () => {
               <div className="w-3 h-3 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
             </div>
           </div>
-        </div>
       </div>
     );
   }
@@ -90,11 +101,17 @@ const Results = () => {
   }
 
   const { totalScore, maxScore, questionAnalysis, assessment } = analysis;
-  const AssessmentIcon = iconMap[assessment.icon] || Star;
+  const assessmentWithDefaults = {
+    ...assessment,
+    color: assessment.color || 'from-purple-600 to-blue-600',
+    bgColor: assessment.bgColor || 'from-purple-50 to-blue-50',
+    icon: assessment.icon || 'Star'
+  };
+  const AssessmentIcon = iconMap[assessmentWithDefaults.icon] || Star;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
-      <div className="h-6 bg-gradient-to-r from-purple-600 to-blue-600"></div>
+      <div className={`h-6 bg-gradient-to-r ${assessmentWithDefaults.color}`}></div>
       <div className="px-6 py-4 bg-white/70 backdrop-blur-sm border-b border-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -131,24 +148,24 @@ const Results = () => {
           </div>
         </div>
 
-        <div className={`bg-gradient-to-br ${assessment.bgColor} rounded-2xl p-6 border border-gray-100 shadow-sm ${showResults ? 'animate-slide-up' : 'opacity-0'}`}>
+        <div className={`bg-gradient-to-br ${assessmentWithDefaults.bgColor} rounded-2xl p-6 border border-gray-100 shadow-sm ${showResults ? 'animate-slide-up' : 'opacity-0'}`}>
           <div className="text-center space-y-4">
-            <div className={`w-16 h-16 mx-auto bg-gradient-to-r ${assessment.color} rounded-2xl flex items-center justify-center`}>
+            <div className={`w-16 h-16 mx-auto bg-gradient-to-r ${assessmentWithDefaults.color} rounded-2xl flex items-center justify-center`}>
               <AssessmentIcon className="w-8 h-8 text-white" />
             </div>
 
             <div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
-                {assessment.level}
+                {assessmentWithDefaults.level}
               </h3>
               <p className="text-gray-700 leading-relaxed text-sm">
-                {assessment.description}
+                {assessmentWithDefaults.description}
               </p>
             </div>
 
             <div className="bg-white/50 rounded-xl p-4">
               <div className="text-3xl font-bold text-gray-900">{totalScore}</div>
-              <div className="text-sm text-gray-600">از {maxScore || 6} امتیاز کل</div>
+              <div className="text-sm text-gray-600">از {maxScore || 100} امتیاز کل</div>
             </div>
           </div>
         </div>
@@ -164,7 +181,7 @@ const Results = () => {
               <div key={index} className="flex items-start justify-between p-3 bg-gray-50 rounded-xl">
                 <div className="flex-1 pr-4">
                   <div className="text-sm font-medium text-gray-900 mb-1">
-                    سوال {item.question}
+                    {item.question}
                   </div>
                   <div className="text-xs text-gray-600">
                     {item.reasoning}
@@ -179,11 +196,23 @@ const Results = () => {
         </div>
 
         <div className={`space-y-3 ${showResults ? 'animate-slide-up' : 'opacity-0'}`}>
+          {nextQuestionnaire <= TOTAL_QUESTIONNAIRES && (
+            <Button
+              onClick={handleNextQuestionnaire}
+              className="w-full h-12 bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-medium rounded-xl btn-press"
+            >
+              شروع پرسشنامه بعدی ({nextQuestionnaire})
+            </Button>
+          )}
+
           <Button
-            onClick={() => navigate('/assessment')}
+            onClick={() => {
+                setCurrentQuestionnaire(1);
+                navigate('/assessment');
+            }}
             className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-xl btn-press"
           >
-            ارزیابی مجدد
+            شروع مجدد از ابتدا
           </Button>
 
           <Button

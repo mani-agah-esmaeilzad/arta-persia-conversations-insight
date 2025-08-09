@@ -1,4 +1,3 @@
-// 📦 ایمپورت‌ها
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,23 +14,33 @@ interface LocalChatMessage {
   character?: string;
 }
 
-// <--- ۱. تغییر آدرس سرور به سرور محلی پایتون
 const API_BASE_URL = 'http://127.0.0.1:8000';
 
 const Assessment = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, currentQuestionnaire } = useAuth();
   const [messages, setMessages] = useState<LocalChatMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [aiCharacters, setAiCharacters] = useState<string[]>([]);
-
-  // <--- ۲. اضافه کردن State برای نگهداری Session ID
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const getEndpoints = (questionnaireId: number) => {
+    switch (questionnaireId) {
+      case 1:
+        return { start: '/start_independence_scenario', chat: '/chat_independence' };
+      case 2:
+        return { start: '/start_confidence_scenario', chat: '/chat_confidence' };
+      case 3:
+        return { start: '/start_resilience_scenario', chat: '/chat_resilience' };
+      default:
+        return null; // Invalid questionnaire
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -44,12 +53,22 @@ const Assessment = () => {
     }
 
     const startAssessment = async () => {
+      const endpoints = getEndpoints(currentQuestionnaire);
+      if (!endpoints) {
+        toast.error("پرسشنامه انتخاب شده معتبر نیست.");
+        navigate('/');
+        return;
+      }
+
       try {
         setLoading(true);
-        toast.success('در حال شروع سناریو...');
+        // Reset state for new questionnaire
+        setMessages([]);
+        setAiCharacters([]);
+        
+        toast.success(`در حال شروع پرسشنامه ${currentQuestionnaire}...`);
 
-        // <--- ۳. تغییر اندپوینت و متد درخواست برای شروع سناریو
-        const response = await fetch(`${API_BASE_URL}/start_scenario`, {
+        const response = await fetch(`${API_BASE_URL}${endpoints.start}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -59,15 +78,11 @@ const Assessment = () => {
         }
 
         const data = await response.json();
-        console.log('Initial data from /start_scenario:', data);
-
         setLoading(false);
         setIsConnected(true);
 
-        // <--- ۴. ذخیره کردن Session ID از پاسخ اولیه
         if (data.session_id) {
           setSessionId(data.session_id);
-          console.log('Session ID set:', data.session_id);
         }
 
         handleAiResponse(data);
@@ -80,30 +95,31 @@ const Assessment = () => {
     };
 
     startAssessment();
-  }, [user, navigate]);
+  }, [user, navigate, currentQuestionnaire]);
 
   const handleAiResponse = (data: any) => {
-    console.log('Processing AI response:', data);
-
+    console.log("Response from server:", data);
+    
     if (data.analysis) {
       toast.info('ارزیابی تکمیل شد!');
-      navigate('/results', { state: { analysis: data.analysis } });
+      navigate('/results', { state: { analysis: data.analysis, fromQuestionnaire: currentQuestionnaire } });
       return;
     }
 
-    if (Array.isArray(data.messages)) {
-      const incomingCharacters = [...new Set(data.messages.map((msg: any) => msg.character))] as string[];
-      const [char1, char2] = aiCharacters.length > 0 ? aiCharacters : incomingCharacters.slice(0, 2);
-
-      if (aiCharacters.length === 0 && incomingCharacters.length >= 2) {
-        setAiCharacters(incomingCharacters.slice(0, 2));
+    if (Array.isArray(data.messages) && data.messages.length > 0) {
+      let currentAiChars = aiCharacters;
+      if (currentAiChars.length === 0) {
+          const incomingCharacters = [...new Set(data.messages.map((msg: any) => msg.character).filter(Boolean))] as string[];
+          if (incomingCharacters.length >= 2) {
+              setAiCharacters(incomingCharacters.slice(0, 2));
+              currentAiChars = incomingCharacters.slice(0, 2);
+          }
       }
 
       let tempMessages: LocalChatMessage[] = [];
       data.messages.forEach((msg: any) => {
-        let messageType: 'ai1' | 'ai2' = msg.character === char2 ? 'ai2' : 'ai1';
         const aiMessage: LocalChatMessage = {
-          type: messageType,
+          type: msg.character === currentAiChars[1] ? 'ai2' : 'ai1',
           content: msg.content,
           timestamp: new Date(),
           character: msg.character
@@ -111,16 +127,17 @@ const Assessment = () => {
         tempMessages.push(aiMessage);
       });
 
-      console.log('Messages to add:', tempMessages);
-
       let delay = 0;
       tempMessages.forEach((msg, i) => {
         setTimeout(() => {
           setMessages((prev) => [...prev, msg]);
           if (i === tempMessages.length - 1) setIsTyping(false);
         }, delay);
-        delay += 2000;
+        delay += 1500;
       });
+    } else {
+        setIsTyping(false);
+        toast.error("پاسخ دریافتی از سرور معتبر نبود.");
     }
   };
 
@@ -131,12 +148,17 @@ const Assessment = () => {
       return;
     }
 
+    const endpoints = getEndpoints(currentQuestionnaire);
+    if (!endpoints) {
+        toast.error("خطای جلسه چت.");
+        setIsTyping(false);
+        return;
+    }
+
     try {
-      // <--- ۵. استفاده از اندپوینت /chat
-      const response = await fetch(`${API_BASE_URL}/chat`, {
+      const response = await fetch(`${API_BASE_URL}${endpoints.chat}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // <--- ۶. ارسال پیام به همراه Session ID
         body: JSON.stringify({ message: message, session_id: sessionId })
       });
 
@@ -145,7 +167,6 @@ const Assessment = () => {
       }
 
       const data = await response.json();
-      console.log('Data from /chat:', data);
       handleAiResponse(data);
 
     } catch (error) {
@@ -200,7 +221,6 @@ const Assessment = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-executive-pearl via-white to-executive-silver/20">
-      {/* Header */}
       <header className="bg-white/95 backdrop-blur-xl border-b border-executive-ash-light/30 p-3 sticky top-0 z-50 shadow-subtle">
         <div className="flex items-center justify-between max-w-full mx-auto">
           <div className="flex items-center gap-3">
@@ -215,7 +235,7 @@ const Assessment = () => {
                 <Users className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h1 className="text-sm font-bold text-executive-charcoal">جلسه تعاملی</h1>
+                <h1 className="text-sm font-bold text-executive-charcoal">جلسه تعاملی - پرسشنامه {currentQuestionnaire}</h1>
                 <div className="flex items-center gap-2 text-xs">
                   {aiCharacters.map((char, i) => (
                     <div key={i} className={`flex items-center gap-1 ${i === 0 ? 'text-blue-600' : 'text-green-600'}`}>
@@ -234,7 +254,6 @@ const Assessment = () => {
         </div>
       </header>
 
-      {/* Chat Messages */}
       <main className="flex-1 overflow-y-auto p-3">
         <div className="max-w-full mx-auto space-y-3">
           {messages.map((msg, i) => (
@@ -303,7 +322,6 @@ const Assessment = () => {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="p-3 bg-white/95 backdrop-blur-xl border-t border-executive-ash-light/30">
         <div className="max-w-full mx-auto">
           <div className="flex gap-2 items-end mb-3">

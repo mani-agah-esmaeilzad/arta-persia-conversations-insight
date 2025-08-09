@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://your-api-domain.com/api';
+const API_BASE_URL = 'https://localhost/api';
 
 // Types
 export interface User {
