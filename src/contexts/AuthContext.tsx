@@ -8,8 +8,6 @@ interface AuthContextType {
   setSelectedSkillId: (skillId: number | null) => void;
   currentAssessmentId: number | null;
   setCurrentAssessmentId: (assessmentId: number | null) => void;
-  currentQuestionnaire: number;
-  setCurrentQuestionnaire: (questionnaire: number) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,7 +16,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [selectedSkillId, setSelectedSkillId] = useState<number | null>(null);
   const [currentAssessmentId, setCurrentAssessmentId] = useState<number | null>(null);
-  const [currentQuestionnaire, setCurrentQuestionnaire] = useState<number>(1);
 
   useEffect(() => {
     // Load user from localStorage on mount
@@ -44,9 +41,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       selectedSkillId,
       setSelectedSkillId,
       currentAssessmentId,
-      setCurrentAssessmentId,
-      currentQuestionnaire,
-      setCurrentQuestionnaire
+      setCurrentAssessmentId
     }}>
       {children}
     </AuthContext.Provider>
